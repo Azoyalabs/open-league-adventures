@@ -23,8 +23,15 @@ Should include:
 
 
 message RequestFightNextTickMessage {
-    string fight_id = 1;
+    uint32 fight_id = 1;
 }
+
+
+/*
+enum ResponseFightNextTickErrors {
+    None,
+}
+*/
 
 
 message ResponseFightNextTick {
@@ -122,6 +129,7 @@ message RawCharacterData {
 }
 
 message StartFight {
-    repeated RawCharacterData player_characters = 1;
-    repeated RawCharacterData enemy_characters = 2;
+    uint32 fight_id = 1;
+    repeated RawCharacterData player_characters = 2;
+    repeated RawCharacterData enemy_characters = 3;
 }

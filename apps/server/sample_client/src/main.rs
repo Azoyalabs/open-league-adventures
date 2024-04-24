@@ -1,11 +1,14 @@
 use std::time::Duration;
 
 use protodefs::pbfight::{
-    client_fight_message::ClientMessage, fight_service_client::FightServiceClient, server_fight_message::Payload, ClientFightMessage, RequestNextTick, RequestStartFight
+    client_fight_message::ClientMessage, fight_service_client::FightServiceClient,
+    server_fight_message::Payload, ClientFightMessage, RequestFightNextTickMessage,
+    RequestNextTick, RequestStartFight,
 };
-use tokio::time;
+use tokio::{sync::mpsc, time};
 use tonic::Request;
 
+/*
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = FightServiceClient::connect("http://[::1]:10000").await?;
@@ -47,6 +50,64 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("WE ESCAPED THE LOOOOOOOPPPPP");
+
+    Ok(())
+}
+*/
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    //let start = time::Instant::now();
+    let (mut tx, mut rx) = mpsc::channel(4);
+
+    let handle1 = tokio::spawn(async move {
+        let mut client = FightServiceClient::connect("http://[::1]:10000")
+            .await
+            .unwrap();
+
+        while let Some(msg) = rx.recv().await {
+            if msg {
+                break;
+            }
+
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            client
+                .request_fight_next_tick(Request::new(RequestFightNextTickMessage { fight_id: 0 }))
+                .await
+                .unwrap();
+        }
+    });
+
+    let handle_2 = tokio::spawn(async move {
+        let mut client = FightServiceClient::connect("http://[::1]:10000")
+            .await
+            .unwrap();
+
+        let response = client
+            .request_fight_start(Request::new(RequestStartFight {
+                player_id: "BigFrogInc".into(),
+            }))
+            .await
+            .unwrap();
+
+        let mut inbound = response.into_inner();
+
+        while let Some(msg) = inbound.message().await.unwrap() {
+            println!("RESPONSE = {:?}\n", msg);
+
+            if matches!(msg.payload.unwrap(), Payload::EndFight(_)) {
+                tx.send(true).await.unwrap();
+                break;
+            } else {
+                tx.send(false).await.unwrap();
+            }
+        }
+    });
+
+    tokio::select!(
+        _ = handle1 => {},
+        _ = handle_2 => {}
+    );
 
     Ok(())
 }
