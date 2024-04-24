@@ -8,20 +8,13 @@ use futures_util::lock::Mutex;
 use game_types::Character;
 
 use postgres::NoTls;
-use rand::{
-    rngs::SmallRng,
-    SeedableRng,
-};
+use rand::{rngs::SmallRng, SeedableRng};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Request, Response, Status};
 
 use protodefs::pbfight::{
-    client_fight_message::ClientMessage,
-    fight_service_server::{FightService, FightServiceServer},
-    server_fight_message::Payload,
-    ClientFightMessage, EndFight,
-    RawCharacterData, ServerFightMessage, StartFight,
+    client_fight_message::ClientMessage, fight_service_server::{FightService, FightServiceServer}, server_fight_message::Payload, ClientFightMessage, EndFight, RawCharacterData, RequestFightNextTickMessage, RequestStartFight, ResponseFightNextTick, ServerFightMessage, StartFight
 };
 
 use tokio_stream::StreamExt;
@@ -33,6 +26,8 @@ pub struct MyFightService {
 #[tonic::async_trait]
 impl FightService for MyFightService {
     type FightStream = ReceiverStream<Result<ServerFightMessage, Status>>;
+    type RequestFightStartStream = ReceiverStream<Result<ServerFightMessage, Status>>;
+
 
     async fn fight(
         &self,
@@ -42,31 +37,7 @@ impl FightService for MyFightService {
 
         let (mut tx, rx) = mpsc::channel(4);
 
-        /*
-        let player_charas_from_server = {
-            let mut acc = self.db_accessor.lock().await; //.unwrap();
-            acc.get_player_team_charas().await.unwrap()
-        };
-
-        let mut player_charas_ok: Vec<Character> = player_charas_from_server
-            .iter()
-            .map(|chara| chara.to_character())
-            .collect();
-
-        let player_charas: Vec<RawCharacterData> = player_charas_from_server
-            .iter()
-            .map(|chara| RawCharacterData {
-                max_hp: chara.max_hp,
-                strength: chara.strength,
-                speed: chara.speed,
-            })
-            .collect();
-        */
-
-        let db_accessor = {
-            self.db_accessor.clone()
-        };
-
+        let db_accessor = { self.db_accessor.clone() };
 
         tokio::spawn(async move {
             let mut rng = SmallRng::from_entropy();
@@ -169,6 +140,27 @@ impl FightService for MyFightService {
 
         Ok(Response::new(ReceiverStream::new(rx)))
     }
+
+    async fn request_fight_start(
+        &self,
+        request: Request<RequestStartFight>,
+    ) -> Result<Response<Self::RequestFightStartStream>, Status> {
+        let (mut tx, rx) = mpsc::channel(4);
+
+        Ok(Response::new(ReceiverStream::new(rx)))
+    }
+
+    async fn request_fight_next_tick(
+        &self,
+        request: Request<RequestFightNextTickMessage>,
+    ) -> Result<Response<ResponseFightNextTick>, Status> {
+
+        return Ok(
+            Response::new(
+                ResponseFightNextTick {}
+            )
+        );
+    }
 }
 
 #[tokio::main]
@@ -177,11 +169,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cfg = Config::new();
     cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
-    cfg.password = Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_USER must be set."));
-    cfg.host =  Some(std::env::var("SUPABASE_DB_HOST").expect("SUPABASE_DB_HOST must be set."));
-    cfg.port = Some(std::env::var("SUPABASE_DB_PORT").expect("SUPABASE_DB_PORT must be set.").parse().unwrap());
+    cfg.password =
+        Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_USER must be set."));
+    cfg.host = Some(std::env::var("SUPABASE_DB_HOST").expect("SUPABASE_DB_HOST must be set."));
+    cfg.port = Some(
+        std::env::var("SUPABASE_DB_PORT")
+            .expect("SUPABASE_DB_PORT must be set.")
+            .parse()
+            .unwrap(),
+    );
     cfg.dbname = Some(std::env::var("SUPABASE_DB_NAME").expect("SUPABASE_DB_NAME must be set."));
-
 
     let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
@@ -189,7 +186,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_accessor = DatabaseAccessor {
         pool: pool, //Arc::new(Mutex::new(pool))
     };
-    
+
     let wrapped = AccessorWrapper::Live(db_accessor);
 
     //let addr = "[::1]:50051".parse()?;

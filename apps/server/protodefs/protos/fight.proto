@@ -6,6 +6,9 @@ package fight;
 
 service FightService {
     rpc Fight(stream ClientFightMessage) returns (stream ServerFightMessage);
+
+    rpc RequestFightStart(RequestStartFight) returns (stream ServerFightMessage);
+    rpc RequestFightNextTick(RequestFightNextTickMessage) returns (ResponseFightNextTick);
 }
 
 
@@ -17,6 +20,17 @@ Should include:
 - End of fight  
 
 */
+
+
+message RequestFightNextTickMessage {
+    string fight_id = 1;
+}
+
+
+message ResponseFightNextTick {
+    
+}
+
 
 message ClientFightMessage {
     oneof client_message {
