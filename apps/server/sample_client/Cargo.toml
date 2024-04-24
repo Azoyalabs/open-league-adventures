@@ -1,0 +1,11 @@
+[package]
+name = "sample_client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+protodefs = {path="../protodefs"}
+tokio = { version = "1.37.0", features = ["full"] }
+tonic = "0.11.0"
+tokio-stream = "0.1.15"
+async-stream = "0.3.5"

@@ -1,0 +1,9 @@
+[workspace]
+members = [ 
+    "database",
+    "fight_system",
+    "game_types", 
+    "standalone", 
+    "sample_client", 
+    "protodefs"
+    ]

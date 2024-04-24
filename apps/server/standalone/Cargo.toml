@@ -1,0 +1,21 @@
+[package]
+name = "standalone"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+protodefs = {path="../protodefs"}
+database = {path = "../database"}
+game_types = {path="../game_types"}
+fight_system = {path = "../fight_system"}
+tokio = { version = "1.37.0", features = ["full"] }
+rand = "0.8.5"
+tonic = "0.11.0"
+tokio-stream = "0.1.15"
+postgres = "0.19.7"
+tokio-postgres = "0.7.10"
+deadpool-postgres = "0.12.1"
+futures-util = "0.3.30"
+dotenv = "0.15.0"
