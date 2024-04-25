@@ -209,12 +209,22 @@ impl FightService for MyFightService {
                 })
                 .collect();
 
+            let enemy_charas_to_send: Vec<RawCharacterData> = enemy_chars
+                .iter()
+                .map(|chara| RawCharacterData {
+                    max_hp: chara.max_hp,
+                    attack: chara.attack,
+                    defense: chara.defense,
+                    speed: chara.speed,
+                })
+                .collect();
+
             // send to player that fight is ready to proceed
             tx.send(Ok(ServerFightMessage {
                 payload: Some(Payload::StartFight(StartFight {
                     fight_id: fight_id,
                     player_characters: player_charas.clone(),
-                    enemy_characters: vec![],
+                    enemy_characters: enemy_charas_to_send,
                 })),
             }))
             .await
