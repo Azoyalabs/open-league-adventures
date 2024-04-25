@@ -56,7 +56,7 @@ impl DatabaseAccess for DatabaseAccessor {
             .iter()
             .map(|chara| {
                 CharacterRaw {
-                max_hp: 10,
+                max_hp: chara.hp as u32,
                 attack: chara.attack as u32,
                 defense: chara.defense as u32,
                 speed: chara.speed as u32,
