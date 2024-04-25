@@ -3,7 +3,7 @@ use std::time::Duration;
 use protodefs::pbfight::{
     client_fight_message::ClientMessage, fight_service_client::FightServiceClient,
     server_fight_message::Payload, ClientFightMessage, RequestFightNextTickMessage,
-    RequestNextTick, RequestStartFight,
+    RequestNextTick, RequestStartFight, StartFight,
 };
 use tokio::{sync::mpsc, time};
 use tonic::Request;
@@ -55,6 +55,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 */
 
+enum MyMessage {
+    StartFight(u32),
+    NextTick,
+    EndFight,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //let start = time::Instant::now();
@@ -65,14 +71,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .unwrap();
 
+        let mut fight_id = None;
+
         while let Some(msg) = rx.recv().await {
+            /*
             if msg {
                 break;
+            }
+            */
+
+            match msg {
+                MyMessage::StartFight(id) => {
+                    println!("fight id is: {}", id);
+                    fight_id = Some(id)
+                }
+                MyMessage::EndFight => break,
+                MyMessage::NextTick => (),
             }
 
             tokio::time::sleep(Duration::from_secs(1)).await;
             client
-                .request_fight_next_tick(Request::new(RequestFightNextTickMessage { fight_id: 0 }))
+                .request_fight_next_tick(Request::new(RequestFightNextTickMessage {
+                    fight_id: fight_id.unwrap(),
+                }))
                 .await
                 .unwrap();
         }
@@ -95,12 +116,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         while let Some(msg) = inbound.message().await.unwrap() {
             println!("RESPONSE = {:?}\n", msg);
 
+            match msg.payload.unwrap() {
+                Payload::EndFight(_) => {
+                    tx.send(MyMessage::EndFight).await.unwrap();
+                    break;
+                }
+                Payload::StartFight(data) => {
+                    tx.send(MyMessage::StartFight(data.fight_id)).await.unwrap();
+                }
+                Payload::FightAction(_) => tx.send(MyMessage::NextTick).await.unwrap(),
+            }
+
+            /*
             if matches!(msg.payload.unwrap(), Payload::EndFight(_)) {
-                tx.send(true).await.unwrap();
+                tx.send(MyMessage::EndFight).await.unwrap();
                 break;
             } else {
-                tx.send(false).await.unwrap();
+                match msg.payload.unwrap() {
+                    Payload::StartFight(data) => {
+                        tx.send(
+                            MyMessage::StartFight(data.fight_id)
+                        ).await.unwrap();
+                        //data.fight_id
+                    },
+                    _ => tx.send(MyMessage::NextTick).await.unwrap()
+                }
             }
+            */
         }
     });
 

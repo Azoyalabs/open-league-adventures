@@ -162,6 +162,7 @@ impl FightService for MyFightService {
             let mut lock = self.id_allocator.lock().await;
             let fight_id = *lock;
             *lock += 1;
+            println!("Allocated fight id: {}", fight_id);
             fight_id
         };
 
@@ -203,7 +204,7 @@ impl FightService for MyFightService {
                 .map(|chara| RawCharacterData {
                     max_hp: chara.max_hp,
                     attack: chara.attack,
-                    defense: 0,
+                    defense: chara.defense,
                     speed: chara.speed,
                 })
                 .collect();
@@ -211,7 +212,7 @@ impl FightService for MyFightService {
             // send to player that fight is ready to proceed
             tx.send(Ok(ServerFightMessage {
                 payload: Some(Payload::StartFight(StartFight {
-                    fight_id: 0,
+                    fight_id: fight_id,
                     player_characters: player_charas.clone(),
                     enemy_characters: vec![],
                 })),
@@ -220,7 +221,7 @@ impl FightService for MyFightService {
             .unwrap();
 
             while rx_next_tick.recv().await.is_some() {
-                println!("received request for new tick");
+                //println!("received request for new tick");
                 let (tick_data, fight_status) = fight_system::tick(
                     &mut player_charas_ok,
                     &mut enemy_chars,
@@ -319,6 +320,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         channels: Arc::new(Mutex::new(HashMap::new())),
         id_allocator: Arc::new(Mutex::new(0)),
     };
+
 
     let svc = FightServiceServer::new(fight_service);
     Server::builder()
