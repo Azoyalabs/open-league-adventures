@@ -152,6 +152,7 @@ impl FightService for MyFightService {
         &self,
         request: Request<RequestStartFight>,
     ) -> Result<Response<Self::RequestFightStartStream>, Status> {
+        println!("Received request to start new fight");
         let (mut tx, rx) = mpsc::channel(4);
 
         let (mut tx_next_tick, mut rx_next_tick) = mpsc::channel(4);
@@ -219,6 +220,7 @@ impl FightService for MyFightService {
             .unwrap();
 
             while rx_next_tick.recv().await.is_some() {
+                println!("received request for new tick");
                 let (tick_data, fight_status) = fight_system::tick(
                     &mut player_charas_ok,
                     &mut enemy_chars,
@@ -321,9 +323,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let svc = FightServiceServer::new(fight_service);
     Server::builder()
     .accept_http1(true)
-    .layer(GrpcWebLayer::new())
-    .add_service(svc)
-    //.add_service(tonic_web::enable(svc))
+    //.layer(GrpcWebLayer::new())
+    //.add_service(svc)
+    .add_service(tonic_web::enable(svc))
     .serve(addr).await?;
 
     return Ok(());
