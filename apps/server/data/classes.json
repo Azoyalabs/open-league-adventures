@@ -1,6 +1,32 @@
 [
     {
-        
-    }
+        "id": "warrior",
+        "archetypename": "warrior",
+        "archetypedescription": "A valiant Melee combattant",
+        "model": "warrior.fbx"
+    },
 
+
+    {
+        "id": "warrior",
+        "archetypename": "warrior",
+        "archetypedescription": "A valiant Melee combattant",
+        "model": "warrior.fbx"
+    },
+
+
+    {
+        "id": "warrior",
+        "archetypename": "warrior",
+        "archetypedescription": "A valiant Melee combattant",
+        "model": "warrior.fbx"
+    },
+
+
+    {
+        "id": "warrior",
+        "archetypename": "warrior",
+        "archetypedescription": "A valiant Melee combattant",
+        "model": "warrior.fbx"
+    },
 ]

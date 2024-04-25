@@ -106,7 +106,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let response = client
             .request_fight_start(Request::new(RequestStartFight {
-                player_id: "BigFrogInc".into(),
+                player_id: "Bogdanoff".into(),
             }))
             .await
             .unwrap();

@@ -298,9 +298,9 @@ GetTeamUserCharacters, 1>
 } }pub fn get_team_user_characters_with_stats() -> GetTeamUserCharactersWithStatsStmt
 { GetTeamUserCharactersWithStatsStmt(cornucopia_async::private::Stmt::new("SELECT Character.id AS character_id, Character.experience, ArchetypeStats.*
 FROM PlayerTeam
-JOIN Character ON PlayerTeam.playerId = Character.playerID
-JOIN ArchetypeStats ON Character.archetypeID = ArchetypeStats.archetypeID
-WHERE PlayerTeam.playerId = $1")) } pub struct
+INNER JOIN Character ON PlayerTeam.playerId = Character.playerID
+INNER JOIN ArchetypeStats ON Character.archetypeID = ArchetypeStats.archetypeID
+WHERE (PlayerTeam.playerId = $1 and Character.lvl = ArchetypeStats.lvl)")) } pub struct
 GetTeamUserCharactersWithStatsStmt(cornucopia_async::private::Stmt); impl GetTeamUserCharactersWithStatsStmt
 { pub fn bind<'a, C:
 GenericClient,T1:

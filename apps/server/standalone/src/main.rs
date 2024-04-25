@@ -191,6 +191,8 @@ impl FightService for MyFightService {
                 acc.get_player_team_charas(&player_id).await.unwrap()
             };
 
+            println!("Nb Charas Player: {}", player_charas_from_server.len());
+
             let mut player_charas_ok: Vec<Character> = player_charas_from_server
                 .iter()
                 .map(|chara| chara.to_character())

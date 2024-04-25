@@ -11,7 +11,9 @@ use tokio_postgres::Client;
 
 use crate::trait_def::DatabaseAccess;
 
-use crate::cornucopia::queries::reads::{get_team_user_characters_with_stats, GetTeamUserCharacters};
+use crate::cornucopia::queries::reads::{
+    get_team_user_characters_with_stats, GetTeamUserCharacters,
+};
 
 pub struct DatabaseAccessor {
     pub pool: Pool,
@@ -49,20 +51,20 @@ impl DatabaseAccess for DatabaseAccessor {
             res
         };
 
+        println!("how many charas???: {}", res.len());
+        println!("charas: {:?}", res);
         //character_queries::user_team_characters().bind(&mut self.client, &"yep".to_string()).all();
 
         // map to CharacterRaw
         let chars = res
             .iter()
-            .map(|chara| {
-                CharacterRaw {
+            .map(|chara| CharacterRaw {
                 max_hp: chara.hp as u32,
                 attack: chara.attack as u32,
                 defense: chara.defense as u32,
                 speed: chara.speed as u32,
                 experience: chara.experience as u32,
-            }
-    })
+            })
             .collect();
 
         return Ok(chars);
