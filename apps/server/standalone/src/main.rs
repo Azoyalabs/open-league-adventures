@@ -318,7 +318,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let svc = FightServiceServer::new(fight_service);
-    Server::builder().add_service(svc).serve(addr).await?;
+    Server::builder()
+    //.add_service(svc)
+    .add_service(tonic_web::enable(svc))
+    .serve(addr).await?;
 
     return Ok(());
 }
