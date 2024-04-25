@@ -322,8 +322,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Server::builder()
     .accept_http1(true)
     .layer(GrpcWebLayer::new())
-    //.add_service(svc)
-    .add_service(tonic_web::enable(svc))
+    .add_service(svc)
+    //.add_service(tonic_web::enable(svc))
     .serve(addr).await?;
 
     return Ok(());
