@@ -296,6 +296,7 @@ def to_eternal_quest_stats(raw_stats: Dict[str, Dict[int, Dict[str, int]]]):
                 continue
                 
         #  "HP", "MP", "Str", "Agl", "Int", "Sta", "Lck"
+        """
         curr_class_data = {}
         for curr_level in range(1, 100):
             curr_class_data[str(curr_level)] = {
@@ -304,6 +305,16 @@ def to_eternal_quest_stats(raw_stats: Dict[str, Dict[int, Dict[str, int]]]):
                 "speed": raw_stats[curr_class][curr_level]["Agl"],
                 "hp": raw_stats[curr_class][curr_level]["HP"],
             }
+        """
+        curr_class_data = []
+        for curr_level in range(1, 100):
+            temp = {"level": curr_level, "stats": {
+                "attack": raw_stats[curr_class][curr_level]["Str"] if (curr_class in ["Warrior", "Thief"]) else raw_stats[curr_class][curr_level]["Int"],
+                "defense": raw_stats[curr_class][curr_level]["Sta"],
+                "speed": raw_stats[curr_class][curr_level]["Agl"],
+                "hp": raw_stats[curr_class][curr_level]["HP"],
+            } }
+            curr_class_data.append(temp)
             
         processed[new_class_name] = curr_class_data
     return processed
@@ -323,6 +334,8 @@ with open("processed_stats.json", "w+") as f:
     f.write(json.dumps(processed_stats))
 
 
+
+"""
 from matplotlib import pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -372,4 +385,4 @@ for name in ["warrior", "ranger", "white_mage", "black_mage"]:
 
 # Show plot
 plt.show()
-
+"""

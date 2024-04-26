@@ -332,7 +332,7 @@ i32, 1>
         |row| { row.get(0) }, mapper: |it| { it },
     }
 } }}pub mod writes
-{ use futures::{{StreamExt, TryStreamExt}};use futures; use cornucopia_async::GenericClient;#[derive( Debug)] pub struct CreateCharacterParams<T1: cornucopia_async::StringSql,T2: cornucopia_async::StringSql,T3: cornucopia_async::StringSql,> { pub nftaddress: T1,pub playerid: T2,pub archetypeid: T3,}pub fn create_player() -> CreatePlayerStmt
+{ use futures::{{StreamExt, TryStreamExt}};use futures; use cornucopia_async::GenericClient;#[derive( Debug)] pub struct CreateCharacterParams<T1: cornucopia_async::StringSql,T2: cornucopia_async::StringSql,T3: cornucopia_async::StringSql,> { pub nftaddress: T1,pub playerid: T2,pub archetypeid: T3,}#[derive( Debug)] pub struct CreateArchetypeStatsParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub archetypeid: T1,pub attack: i16,pub defense: i16,pub speed: i16,pub hp: i16,}pub fn create_player() -> CreatePlayerStmt
 { CreatePlayerStmt(cornucopia_async::private::Stmt::new("insert into Player (id)
 values ($1)")) } pub struct
 CreatePlayerStmt(cornucopia_async::private::Stmt); impl CreatePlayerStmt
@@ -365,4 +365,24 @@ tokio_postgres::Error>> + Send + 'a>>, C> for CreateCharacterStmt
     CreateCharacterParams<T1,T2,T3,>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
     tokio_postgres::Error>> + Send + 'a>>
     { Box::pin(self.bind(client, &params.nftaddress,&params.playerid,&params.archetypeid,)) }
+}pub fn create_archetype_stats() -> CreateArchetypeStatsStmt
+{ CreateArchetypeStatsStmt(cornucopia_async::private::Stmt::new("insert into archetypestats (lvl, archetypeid, attack, defense, speed, hp)
+values ($1, $2, $3, $4, $5, $6)")) } pub struct
+CreateArchetypeStatsStmt(cornucopia_async::private::Stmt); impl CreateArchetypeStatsStmt
+{ pub async fn bind<'a, C:
+GenericClient,T1:
+cornucopia_async::StringSql,>(&'a mut self, client: &'a  C,
+lvl: &'a i16,archetypeid: &'a T1,attack: &'a i16,defense: &'a i16,speed: &'a i16,hp: &'a i16,) -> Result<u64, tokio_postgres::Error>
+{
+    let stmt = self.0.prepare(client).await?;
+    client.execute(stmt, &[lvl,archetypeid,attack,defense,speed,hp,]).await
+} }impl <'a, C: GenericClient + Send + Sync, T1: cornucopia_async::StringSql,>
+cornucopia_async::Params<'a, CreateArchetypeStatsParams<T1,>, std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
+tokio_postgres::Error>> + Send + 'a>>, C> for CreateArchetypeStatsStmt
+{
+    fn
+    params(&'a mut self, client: &'a  C, params: &'a
+    CreateArchetypeStatsParams<T1,>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
+    tokio_postgres::Error>> + Send + 'a>>
+    { Box::pin(self.bind(client, &params.lvl,&params.archetypeid,&params.attack,&params.defense,&params.speed,&params.hp,)) }
 }}}

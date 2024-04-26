@@ -1,32 +1,32 @@
 [
     {
         "id": "warrior",
-        "archetypename": "warrior",
-        "archetypedescription": "A valiant Melee combattant",
+        "archetypename": "Warrior",
+        "archetypedescription": "Fearless champions of close-quarters combat, wielding heavy weapons and sturdy armor to crush their enemies with brute strength and unwavering resolve.",
         "model": "warrior.fbx"
     },
 
 
     {
-        "id": "warrior",
-        "archetypename": "warrior",
-        "archetypedescription": "A valiant Melee combattant",
-        "model": "warrior.fbx"
+        "id": "ranger",
+        "archetypename": "Ranger",
+        "archetypedescription": "A swift and skilled marksman, adept at ranged combat and tracking prey with precision.",
+        "model": "ranger.fbx"
     },
 
 
     {
-        "id": "warrior",
-        "archetypename": "warrior",
-        "archetypedescription": "A valiant Melee combattant",
-        "model": "warrior.fbx"
+        "id": "white_mage",
+        "archetypename": "White Mage",
+        "archetypedescription": "A compassionate healer and wielder of holy magic, dedicated to restoring health and providing protection to allies in need.",
+        "model": "white_mage.fbx"
     },
 
 
     {
-        "id": "warrior",
-        "archetypename": "warrior",
-        "archetypedescription": "A valiant Melee combattant",
-        "model": "warrior.fbx"
-    },
+        "id": "black_mage",
+        "archetypename": "Black Mage",
+        "archetypedescription": "Masters of the arcane arts, harnessing the destructive power of elemental magic to obliterate foes and manipulate the forces of nature to their will.",
+        "model": "black_mage.fbx"
+    }
 ]
