@@ -33,7 +33,7 @@ impl ActionResult {
                         protodefs::pbfight::action_result::ActionResultPayload::ActionResultDamage(
                             protodefs::pbfight::ActionResultDamage {
                                 value: value as u32,
-                                unit_dies: unit_dies,
+                                unit_dies,
                             },
                         ),
                     ),
@@ -76,10 +76,10 @@ pub struct UnitReference {
 
 impl UnitReference {
     pub fn to_protobuf(self) -> pbfight::UnitReference {
-        return pbfight::UnitReference {
+        pbfight::UnitReference {
             is_player: self.is_player_unit,
             unit_id: self.unit_id as u32
-        };
+        }
     }
 
 }
@@ -95,14 +95,14 @@ pub struct TickData {
 
 impl TickData {
     pub fn to_protobuf(self) -> FightAction {
-        let fight_action = FightAction {
+        
+
+        FightAction {
             unit_id: Some(self.unit_acting.to_protobuf()),
             action: Some(protodefs::pbfight::fight_action::Action::FightActionAttack(
                 protodefs::pbfight::FightActionAttack {},
             )),
             action_result: self.action_results.into_iter().map(|elem| elem.to_protobuf()).collect(),
-        };
-
-        return fight_action;
+        }
     }
 }

@@ -1,18 +1,18 @@
-use std::sync::Arc;
+
 
 use deadpool_postgres::Pool;
-use futures::lock::Mutex;
-use rusqlite::{params, Connection, Result};
+
+use rusqlite::{Result};
 
 //use postgres::{Client, Config, NoTls};
 
-use game_types::{CharacterRaw, CharacterRawBuilder};
-use tokio_postgres::Client;
+use game_types::{CharacterRaw};
+
 
 use crate::trait_def::DatabaseAccess;
 
 use crate::cornucopia::queries::reads::{
-    get_team_user_characters_with_stats, GetTeamUserCharacters,
+    get_team_user_characters_with_stats,
 };
 
 pub struct DatabaseAccessor {
@@ -42,13 +42,13 @@ impl DatabaseAccess for DatabaseAccessor {
                                                              .unwrap();
                                                          */
 
-            let res = get_team_user_characters_with_stats()
+            
+
+            get_team_user_characters_with_stats()
                 .bind(&client, &player_id)
                 .all()
                 .await
-                .unwrap();
-
-            res
+                .unwrap()
         };
 
         println!("how many charas???: {}", res.len());
@@ -67,6 +67,6 @@ impl DatabaseAccess for DatabaseAccessor {
             })
             .collect();
 
-        return Ok(chars);
+        Ok(chars)
     }
 }

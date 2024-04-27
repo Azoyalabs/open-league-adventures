@@ -1,23 +1,16 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
-use std::time::Instant;
+
 
 use database::cornucopia::queries::writes::create_archetype_stats;
 use deadpool_postgres::{Config, Runtime};
 use dotenv::dotenv;
-use game_types::Character;
 
-use database::cornucopia::queries::{
-    reads::get_team_user_characters_with_stats, writes::create_character,
-};
 
-use database::cornucopia::queries::migrations::set_experience;
 
-use postgres::{Client, NoTls};
+use postgres::NoTls;
 
-use tokio::{runtime::Handle, sync::mpsc};
-use tonic::{transport::Server, Request, Response, Status};
 
 use serde::{Deserialize, Serialize};
 
@@ -108,7 +101,7 @@ async fn main() {
         serde_json::from_str(&buff).unwrap()
     };
 
-    let mut tx = client.transaction().await.unwrap();
+    let tx = client.transaction().await.unwrap();
 
     //let stmt = set_experience();
     for (class_id, class_data) in stats_container {

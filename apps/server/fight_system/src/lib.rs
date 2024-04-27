@@ -30,7 +30,7 @@ pub fn tick(
     }
 
     // find chara with highest speed
-    let (id_chara, is_player) = find_chara_highest_speed(&player_accumulator, &enemy_accumulator);
+    let (id_chara, is_player) = find_chara_highest_speed(player_accumulator, enemy_accumulator);
 
     // choose action
 
@@ -95,7 +95,7 @@ pub fn tick(
     // check if all been wiped
     let fight_status = check_fight_status(player_chars, enemy_chars);
 
-    return (action, fight_status);
+    (action, fight_status)
 }
 
 
@@ -118,7 +118,7 @@ fn check_fight_status(player_chars: &Vec<Character>, enemy_chars: &Vec<Character
     }
 
     if player_all_dead {
-        return FightStatus::FightEnded { player_won: false };
+        FightStatus::FightEnded { player_won: false }
     } else if enemy_all_dead {
         return FightStatus::FightEnded { player_won: true };
     } else {
@@ -150,7 +150,7 @@ fn find_chara_highest_speed(
         }
     }
 
-    return (chosen_id, is_player);
+    (chosen_id, is_player)
 }
 
 /*

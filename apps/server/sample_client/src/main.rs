@@ -1,11 +1,10 @@
 use std::time::Duration;
 
 use protodefs::pbfight::{
-    client_fight_message::ClientMessage, fight_service_client::FightServiceClient,
-    server_fight_message::Payload, ClientFightMessage, RequestFightNextTickMessage,
-    RequestNextTick, RequestStartFight, StartFight,
+    fight_service_client::FightServiceClient,
+    server_fight_message::Payload, RequestFightNextTickMessage, RequestStartFight,
 };
-use tokio::{sync::mpsc, time};
+use tokio::{sync::mpsc};
 use tonic::Request;
 
 /*
@@ -64,7 +63,7 @@ enum MyMessage {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //let start = time::Instant::now();
-    let (mut tx, mut rx) = mpsc::channel(4);
+    let (tx, mut rx) = mpsc::channel(4);
 
     let handle1 = tokio::spawn(async move {
         let mut client = FightServiceClient::connect("http://[::1]:10000")

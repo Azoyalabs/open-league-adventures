@@ -12,13 +12,13 @@ pub struct CharacterRaw {
 
 impl CharacterRaw {
     pub fn to_character(&self) -> Character {
-        return Character {
+        Character {
             max_hp: self.max_hp,
             current_hp: self.max_hp,
             attack: self.attack,
             defense: self.defense,
             speed: self.speed,
-        };
+        }
     }
 }
 
@@ -26,33 +26,39 @@ pub struct CharacterRawBuilder {
     inner: CharacterRaw
 }
 
+impl Default for CharacterRawBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CharacterRawBuilder {
     pub fn new() -> Self {
-        return CharacterRawBuilder { inner: CharacterRaw { max_hp: 0, attack: 0, defense: 0, speed: 0, experience: 0 } }
+        CharacterRawBuilder { inner: CharacterRaw { max_hp: 0, attack: 0, defense: 0, speed: 0, experience: 0 } }
     }
 
     pub fn hp(mut self, value: u32) -> Self {
         self.inner.max_hp = value;
-        return self;
+        self
     }
 
     pub fn attack(mut self, value: u32) -> Self {
         self.inner.attack = value;
-        return self;
+        self
     }
 
     pub fn defense(mut self, value: u32) -> Self {
         self.inner.defense = value;
-        return self;
+        self
     }
 
     pub fn speed(mut self, value: u32) -> Self {
         self.inner.speed = value;
-        return self;
+        self
     }
 
     pub fn build(self) -> CharacterRaw {
-        return self.inner;
+        self.inner
     }
 }
 

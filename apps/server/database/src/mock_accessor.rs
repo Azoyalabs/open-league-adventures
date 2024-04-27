@@ -1,4 +1,4 @@
-use std::{error::Error, future::ready};
+
 
 use game_types::{CharacterRaw, CharacterRawBuilder};
 
@@ -34,6 +34,6 @@ impl DatabaseAccess for MockDatabaseAccessor {
                 .build(),
         );
 
-        return Ok(team);
+        Ok(team)
     }
 }

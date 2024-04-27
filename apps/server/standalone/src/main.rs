@@ -22,7 +22,7 @@ use protodefs::pbfight::{
 };
 
 use tokio_stream::StreamExt;
-use tonic_web::GrpcWebLayer;
+
 
 pub struct MyFightService {
     pub db_accessor: Arc<Mutex<AccessorWrapper>>, //Arc<Mutex<Box<dyn DatabaseAccess + Send + 'static>>>,
@@ -41,7 +41,7 @@ impl FightService for MyFightService {
     ) -> Result<Response<Self::FightStream>, Status> {
         let mut client_stream = request.into_inner();
 
-        let (mut tx, rx) = mpsc::channel(4);
+        let (tx, rx) = mpsc::channel(4);
 
         let db_accessor = { self.db_accessor.clone() };
 
@@ -153,9 +153,9 @@ impl FightService for MyFightService {
         request: Request<RequestStartFight>,
     ) -> Result<Response<Self::RequestFightStartStream>, Status> {
         println!("Received request to start new fight");
-        let (mut tx, rx) = mpsc::channel(4);
+        let (tx, rx) = mpsc::channel(4);
 
-        let (mut tx_next_tick, mut rx_next_tick) = mpsc::channel(4);
+        let (tx_next_tick, mut rx_next_tick) = mpsc::channel(4);
 
         // get the id for this fight and increment
         let fight_id = {
@@ -224,7 +224,7 @@ impl FightService for MyFightService {
             // send to player that fight is ready to proceed
             tx.send(Ok(ServerFightMessage {
                 payload: Some(Payload::StartFight(StartFight {
-                    fight_id: fight_id,
+                    fight_id,
                     player_characters: player_charas.clone(),
                     enemy_characters: enemy_charas_to_send,
                 })),
@@ -321,7 +321,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let addr = "[::1]:10000".parse().unwrap();
     let db_accessor = DatabaseAccessor {
-        pool: pool, //Arc::new(Mutex::new(pool))
+        pool, //Arc::new(Mutex::new(pool))
     };
 
     let wrapped = AccessorWrapper::Live(db_accessor);
