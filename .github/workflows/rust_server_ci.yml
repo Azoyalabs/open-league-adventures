@@ -1,0 +1,27 @@
+name: Rust Server CI
+
+on:
+  push:
+    branches:
+      - main  # Adjust this to match your main branch name
+
+jobs:
+  build:
+    runs-on: ubuntu-23.10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+        with:
+          rust-version: 1.56.0  # Adjust to the version you're using
+
+      - name: Build and test Rust server
+        run: |
+          cd apps/server
+          cargo build standalone --release
+          # cargo test  # Optional: Run tests
+
+      # Add more steps if needed, such as deploying artifacts
