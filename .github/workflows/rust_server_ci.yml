@@ -21,7 +21,7 @@ jobs:
       - name: Build and test Rust server
         run: |
           cd apps/server
-          cargo build standalone --release
+          cargo build --bin standalone --release
           # cargo test  # Optional: Run tests
 
       # Add more steps if needed, such as deploying artifacts
