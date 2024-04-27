@@ -3,7 +3,7 @@ name: Rust Server CI
 on:
   push:
     branches:
-      - main  # Adjust this to match your main branch name
+      - "server_side"  # Adjust this to match your main branch name
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Rust
         uses: actions/setup-rust@v1
         with:
-          rust-version: 1.56.0  # Adjust to the version you're using
+          rust-version: 1.77.2  # Adjust to the version you're using
 
       - name: Build and test Rust server
         run: |
