@@ -42,7 +42,7 @@ pub fn tick(
             false => (0..player_chars.len(), &player_chars),
         };
 
-        let mut target_id: usize = 0;
+        let mut target_id: usize; // = 0;
         loop {
             // choose target
             target_id = rng.gen_range(target_range.clone());
