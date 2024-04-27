@@ -2,7 +2,7 @@ use cornucopia::{CodegenSettings, Error};
 
 
 fn main() -> Result<(), Error> {
-    return Ok(());
+    //return Ok(());
 
     let queries_path = "./queries";
     let schema_file = "./schema.sql";
