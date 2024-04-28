@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (tx, mut rx) = mpsc::channel(4);
 
     //let server_url = "http://[::1]:10000";
-    let server_url = "http://207.154.192.1:10000";
+    let server_url = "https://207.154.192.1:10000";
 
     let handle1 = tokio::spawn(async move {
         let mut client = FightServiceClient::connect(server_url)
