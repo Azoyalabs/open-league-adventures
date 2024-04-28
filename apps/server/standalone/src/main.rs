@@ -305,10 +305,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     let mut cfg = Config::new();
-    cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
+    cfg.user = Some(std::env::var("SUPABASE_DB_USER").unwrap()); //.expect("SUPABASE_DB_USER must be set."));
     cfg.password =
-        Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_USER must be set."));
-    cfg.host = Some(std::env::var("SUPABASE_DB_HOST").expect("SUPABASE_DB_HOST must be set."));
+        Some(std::env::var("SUPABASE_DB_PASSWORD").unwrap()); //.expect("SUPABASE_DB_PASSWORD must be set."));
+    cfg.host = Some(std::env::var("SUPABASE_DB_HOST").unwrap()); //.expect("SUPABASE_DB_HOST must be set."));
     cfg.port = Some(
         std::env::var("SUPABASE_DB_PORT")
             .expect("SUPABASE_DB_PORT must be set.")
