@@ -21,6 +21,18 @@ pub enum AccessorWrapper {
 }
 
 impl AccessorWrapper {
+    pub async fn set_chara_xp_lvl(&mut self, charaid: String, lvl: u32, xp: u32) -> Result<(), ()> {
+        match self {
+            AccessorWrapper::Live(live) => {
+                live.set_chara_xp_lvl(charaid, lvl, xp).await
+            },
+            AccessorWrapper::Mock(mock) => {
+                mock.set_chara_xp_lvl(charaid, lvl, xp).await
+            }
+        }
+    }
+
+
     pub async fn get_player_team_charas(
         &mut self,
         player_id: &str,
@@ -31,6 +43,20 @@ impl AccessorWrapper {
             },
             AccessorWrapper::Mock(mock) => {
                 mock.get_player_team_charas(player_id).await
+            }
+        }
+    }
+
+    pub async fn get_xp_required(
+        &self,
+        lvl: u32
+    ) -> Result<u32, ()> {
+        match self {
+            AccessorWrapper::Live(live) => {
+                live.get_xp_required(lvl).await
+            },
+            AccessorWrapper::Mock(mock) => {
+                mock.get_xp_required(lvl).await
             }
         }
     }

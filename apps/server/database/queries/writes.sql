@@ -11,3 +11,8 @@ VALUES (:nftaddress, :playerid, :archetypeid, 1, 0);
 --! create_archetype_stats
 insert into archetypestats (lvl, archetypeid, attack, defense, speed, hp)
 values (:lvl, :archetypeid, :attack, :defense, :speed, :hp);
+
+--! update_chara_lvl_xp
+UPDATE character
+set lvl = :lvl, experience = :xp
+where id = :charaid;

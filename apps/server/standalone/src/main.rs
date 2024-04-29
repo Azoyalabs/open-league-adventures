@@ -1,6 +1,11 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
-use database::{accessor::DatabaseAccessor, AccessorWrapper};
+use database::{
+    accessor::DatabaseAccessor, cornucopia::queries::reads::get_xp_required, AccessorWrapper,
+};
 use deadpool_postgres::{Config, Runtime};
 use dotenv::dotenv;
 use fight_system::FightStatus;
@@ -22,7 +27,6 @@ use protodefs::pbfight::{
 };
 
 use tokio_stream::StreamExt;
-
 
 pub struct MyFightService {
     pub db_accessor: Arc<Mutex<AccessorWrapper>>, //Arc<Mutex<Box<dyn DatabaseAccess + Send + 'static>>>,
@@ -162,7 +166,7 @@ impl FightService for MyFightService {
             let mut lock = self.id_allocator.lock().await;
             let fight_id = *lock;
             *lock += 1;
-            println!("Allocated fight id: {}", fight_id);
+            //println!("Allocated fight id: {}", fight_id);
             fight_id
         };
 
@@ -190,8 +194,6 @@ impl FightService for MyFightService {
                 let mut acc = db_accessor.lock().await; //.unwrap();
                 acc.get_player_team_charas(&player_id).await.unwrap()
             };
-
-            println!("Nb Charas Player: {}", player_charas_from_server.len());
 
             let mut player_charas_ok: Vec<Character> = player_charas_from_server
                 .iter()
@@ -257,15 +259,57 @@ impl FightService for MyFightService {
                     match fight_status {
                         FightStatus::Ongoing {} => panic!("never"),
                         FightStatus::FightEnded { player_won } => {
+                            let xp_gained = 8;
+
                             println!("Fight has ended, notifying player");
                             tx.send(Ok(ServerFightMessage {
                                 payload: Some(Payload::EndFight(EndFight {
                                     is_player_victory: player_won,
-                                    experience: 8,
+                                    experience: xp_gained,
                                 })),
                             }))
                             .await
                             .unwrap();
+
+                            // update xp on database
+                            let mut all_levels: HashSet<u32> = HashSet::new();
+                            for c in &player_charas_from_server {
+                                all_levels.insert(c.lvl.clone());
+                            }
+
+                            let mut lvl_to_req: HashMap<u32, u32> = HashMap::new();
+                            {
+                                {
+                                    let db_access = db_accessor.lock().await;
+                                    for lvl in all_levels {
+                                        lvl_to_req.insert(
+                                            lvl,
+                                            db_access.get_xp_required(lvl).await.unwrap(),
+                                        );
+                                    }
+                                }
+                            }
+
+                            // compute level ups, and update on db
+                            for c in &player_charas_from_server {
+                                let mut new_xp = c.experience + xp_gained;
+                                let mut new_lvl: u32 = c.lvl;
+                                let req_xp = *lvl_to_req.get(&new_lvl).unwrap();
+                                if new_xp >= req_xp {
+                                    new_xp -= req_xp;
+                                    new_lvl += 1;
+                                }
+
+                                // call to db
+                                {
+                                    let mut db_access = db_accessor.lock().await;
+                                    db_access
+                                        .set_chara_xp_lvl(c.character_id.clone(), new_lvl, new_xp)
+                                        .await
+                                        .unwrap();
+                                }
+                            }
+
                             break;
                         }
                     };
@@ -287,11 +331,11 @@ impl FightService for MyFightService {
                 .get(&request.into_inner().fight_id)
                 .unwrap()
                 .clone()
-                /*
-                .send(())
-                .await
-                .unwrap();
-                */
+            /*
+            .send(())
+            .await
+            .unwrap();
+            */
         };
 
         tx.send(()).await.unwrap();
@@ -306,8 +350,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cfg = Config::new();
     cfg.user = Some(std::env::var("SUPABASE_DB_USER").unwrap()); //.expect("SUPABASE_DB_USER must be set."));
-    cfg.password =
-        Some(std::env::var("SUPABASE_DB_PASSWORD").unwrap()); //.expect("SUPABASE_DB_PASSWORD must be set."));
+    cfg.password = Some(std::env::var("SUPABASE_DB_PASSWORD").unwrap()); //.expect("SUPABASE_DB_PASSWORD must be set."));
     cfg.host = Some(std::env::var("SUPABASE_DB_HOST").unwrap()); //.expect("SUPABASE_DB_HOST must be set."));
     cfg.port = Some(
         std::env::var("SUPABASE_DB_PORT")
@@ -319,8 +362,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
-    let addr = "0.0.0.0:10000".parse().unwrap();//"[::1]:10000".parse().unwrap();
-    println!("server address: {}", addr);
+    let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
+    //let addr = "[::1]:10000".parse().unwrap();
+
     let db_accessor = DatabaseAccessor {
         pool, //Arc::new(Mutex::new(pool))
     };
@@ -334,14 +378,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         id_allocator: Arc::new(Mutex::new(0)),
     };
 
-
     let svc = FightServiceServer::new(fight_service);
     Server::builder()
-    .accept_http1(true)
-    //.layer(GrpcWebLayer::new())
-    //.add_service(svc)
-    .add_service(tonic_web::enable(svc))
-    .serve(addr).await?;
+        .accept_http1(true)
+        //.layer(GrpcWebLayer::new())
+        //.add_service(svc)
+        .add_service(tonic_web::enable(svc))
+        .serve(addr)
+        .await?;
 
     return Ok(());
 }

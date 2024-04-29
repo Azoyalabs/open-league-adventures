@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 /// Character data queried from database
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CharacterRaw {
+    pub character_id: String,
+    pub lvl: u32,
     pub max_hp: u32,
     pub attack: u32,
     pub defense: u32,
@@ -34,7 +36,7 @@ impl Default for CharacterRawBuilder {
 
 impl CharacterRawBuilder {
     pub fn new() -> Self {
-        CharacterRawBuilder { inner: CharacterRaw { max_hp: 0, attack: 0, defense: 0, speed: 0, experience: 0 } }
+        CharacterRawBuilder { inner: CharacterRaw { character_id: "".into(), lvl: 1, max_hp: 0, attack: 0, defense: 0, speed: 0, experience: 0 } }
     }
 
     pub fn hp(mut self, value: u32) -> Self {

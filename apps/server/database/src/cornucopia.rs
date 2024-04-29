@@ -332,7 +332,7 @@ i32, 1>
         |row| { row.get(0) }, mapper: |it| { it },
     }
 } }}pub mod writes
-{ use futures::{{StreamExt, TryStreamExt}};use futures; use cornucopia_async::GenericClient;#[derive( Debug)] pub struct CreateCharacterParams<T1: cornucopia_async::StringSql,T2: cornucopia_async::StringSql,T3: cornucopia_async::StringSql,> { pub nftaddress: T1,pub playerid: T2,pub archetypeid: T3,}#[derive( Debug)] pub struct CreateArchetypeStatsParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub archetypeid: T1,pub attack: i16,pub defense: i16,pub speed: i16,pub hp: i16,}pub fn create_player() -> CreatePlayerStmt
+{ use futures::{{StreamExt, TryStreamExt}};use futures; use cornucopia_async::GenericClient;#[derive( Debug)] pub struct CreateCharacterParams<T1: cornucopia_async::StringSql,T2: cornucopia_async::StringSql,T3: cornucopia_async::StringSql,> { pub nftaddress: T1,pub playerid: T2,pub archetypeid: T3,}#[derive( Debug)] pub struct CreateArchetypeStatsParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub archetypeid: T1,pub attack: i16,pub defense: i16,pub speed: i16,pub hp: i16,}#[derive( Debug)] pub struct UpdateCharaLvlXpParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub xp: i32,pub charaid: T1,}pub fn create_player() -> CreatePlayerStmt
 { CreatePlayerStmt(cornucopia_async::private::Stmt::new("insert into Player (id)
 values ($1)")) } pub struct
 CreatePlayerStmt(cornucopia_async::private::Stmt); impl CreatePlayerStmt
@@ -385,4 +385,25 @@ tokio_postgres::Error>> + Send + 'a>>, C> for CreateArchetypeStatsStmt
     CreateArchetypeStatsParams<T1,>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
     tokio_postgres::Error>> + Send + 'a>>
     { Box::pin(self.bind(client, &params.lvl,&params.archetypeid,&params.attack,&params.defense,&params.speed,&params.hp,)) }
+}pub fn update_chara_lvl_xp() -> UpdateCharaLvlXpStmt
+{ UpdateCharaLvlXpStmt(cornucopia_async::private::Stmt::new("UPDATE character
+set lvl = $1, experience = $2
+where id = $3")) } pub struct
+UpdateCharaLvlXpStmt(cornucopia_async::private::Stmt); impl UpdateCharaLvlXpStmt
+{ pub async fn bind<'a, C:
+GenericClient,T1:
+cornucopia_async::StringSql,>(&'a mut self, client: &'a  C,
+lvl: &'a i16,xp: &'a i32,charaid: &'a T1,) -> Result<u64, tokio_postgres::Error>
+{
+    let stmt = self.0.prepare(client).await?;
+    client.execute(stmt, &[lvl,xp,charaid,]).await
+} }impl <'a, C: GenericClient + Send + Sync, T1: cornucopia_async::StringSql,>
+cornucopia_async::Params<'a, UpdateCharaLvlXpParams<T1,>, std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
+tokio_postgres::Error>> + Send + 'a>>, C> for UpdateCharaLvlXpStmt
+{
+    fn
+    params(&'a mut self, client: &'a  C, params: &'a
+    UpdateCharaLvlXpParams<T1,>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
+    tokio_postgres::Error>> + Send + 'a>>
+    { Box::pin(self.bind(client, &params.lvl,&params.xp,&params.charaid,)) }
 }}}

@@ -7,6 +7,18 @@ use crate::trait_def::DatabaseAccess;
 pub struct MockDatabaseAccessor {}
 
 impl DatabaseAccess for MockDatabaseAccessor {
+    async fn set_chara_xp_lvl(&mut self, charaid: String, lvl: u32, xp: u32) -> Result<(), ()> {
+        return Ok(());
+    }
+
+
+    async fn get_xp_required(
+        &self,
+        _lvl: u32
+    ) -> Result<u32, ()> {
+        return Ok(100);
+    }
+
     async fn get_player_team_charas(
         &mut self,
         _player_id: &str,
