@@ -4,7 +4,7 @@ use std::{
 };
 
 use database::{
-    accessor::DatabaseAccessor, cornucopia::queries::reads::get_xp_required, AccessorWrapper,
+    accessor::DatabaseAccessor, AccessorWrapper,
 };
 use deadpool_postgres::{Config, Runtime};
 use dotenv::dotenv;

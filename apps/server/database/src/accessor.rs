@@ -2,11 +2,11 @@
 
 use deadpool_postgres::Pool;
 
-use rusqlite::{Result};
+use rusqlite::Result;
 
 //use postgres::{Client, Config, NoTls};
 
-use game_types::{CharacterRaw};
+use game_types::CharacterRaw;
 
 
 use crate::cornucopia::queries::writes::update_chara_lvl_xp;

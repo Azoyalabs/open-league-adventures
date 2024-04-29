@@ -4,7 +4,7 @@ use protodefs::pbfight::{
     fight_service_client::FightServiceClient,
     server_fight_message::Payload, RequestFightNextTickMessage, RequestStartFight,
 };
-use tokio::{sync::mpsc};
+use tokio::sync::mpsc;
 use tonic::Request;
 
 /*
