@@ -117,6 +117,7 @@ message FightReward {
 message EndFight {
     bool is_player_victory = 1;
     uint32 experience = 2;
+    uint32 gold = 3;
 }
 
 

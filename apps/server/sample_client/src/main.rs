@@ -65,8 +65,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //let start = time::Instant::now();
     let (tx, mut rx) = mpsc::channel(4);
 
-    let server_url = "http://[::1]:10000";
-    //let server_url = "http://207.154.205.115:10000";
+    //let server_url = "http://[::1]:10000";
+    let server_url = "http://207.154.205.115:10000";
 
     let handle1 = tokio::spawn(async move {
         let mut client = FightServiceClient::connect(server_url)
@@ -130,22 +130,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Payload::FightAction(_) => tx.send(MyMessage::NextTick).await.unwrap(),
             }
 
-            /*
-            if matches!(msg.payload.unwrap(), Payload::EndFight(_)) {
-                tx.send(MyMessage::EndFight).await.unwrap();
-                break;
-            } else {
-                match msg.payload.unwrap() {
-                    Payload::StartFight(data) => {
-                        tx.send(
-                            MyMessage::StartFight(data.fight_id)
-                        ).await.unwrap();
-                        //data.fight_id
-                    },
-                    _ => tx.send(MyMessage::NextTick).await.unwrap()
-                }
-            }
-            */
         }
     });
 

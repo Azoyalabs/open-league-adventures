@@ -310,6 +310,8 @@ impl FightService for MyFightService {
                                 }
                             }
 
+                            // update gold on database 
+
                             break;
                         }
                     };
