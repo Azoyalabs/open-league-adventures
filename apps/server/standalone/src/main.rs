@@ -261,13 +261,14 @@ impl FightService for MyFightService {
                         FightStatus::Ongoing {} => panic!("never"),
                         FightStatus::FightEnded { player_won } => {
                             let xp_gained = 8;
+                            let gold_gained = 10;
 
                             println!("Fight has ended, notifying player");
                             tx.send(Ok(ServerFightMessage {
                                 payload: Some(Payload::EndFight(EndFight {
                                     is_player_victory: player_won,
                                     experience: xp_gained,
-                                    gold: 0
+                                    gold: gold_gained
                                 })),
                             }))
                             .await
@@ -315,7 +316,7 @@ impl FightService for MyFightService {
                             // update gold on database 
                             {
                                 let mut db_access = db_accessor.lock().await;
-                                db_access.add_gold_player(&player_id, 10).await.unwrap();
+                                db_access.add_gold_player(&player_id, gold_gained).await.unwrap();
                             }
 
                             break;
