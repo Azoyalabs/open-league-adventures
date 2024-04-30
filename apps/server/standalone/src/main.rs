@@ -370,8 +370,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
-    //let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
-    let addr = "[::1]:10000".parse().unwrap();
+    let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
+    //let addr = "[::1]:10000".parse().unwrap();
 
     let db_accessor = DatabaseAccessor {
         pool, //Arc::new(Mutex::new(pool))
