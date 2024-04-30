@@ -28,7 +28,8 @@ CREATE TABLE ArchetypeStats (
 
 CREATE TABLE Player (
     id varchar(256) NOT NULL PRIMARY KEY,
-    clanID int REFERENCES Clan(id)
+    clanID int REFERENCES Clan(id),
+    gold int NOT NULL default 0
 );
 
 CREATE TABLE PlayerTeam (

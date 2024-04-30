@@ -9,7 +9,7 @@ use rusqlite::Result;
 use game_types::CharacterRaw;
 
 
-use crate::cornucopia::queries::writes::update_chara_lvl_xp;
+use crate::cornucopia::queries::writes::{add_gold_player, update_chara_lvl_xp};
 use crate::trait_def::DatabaseAccess;
 
 use crate::cornucopia::queries::reads::{
@@ -21,6 +21,13 @@ pub struct DatabaseAccessor {
 }
 
 impl DatabaseAccess for DatabaseAccessor {
+    async fn add_gold_player(&mut self, player_id: &str, gold_amount: u32) -> Result<(), ()> {
+        let client = self.pool.get().await.unwrap(); //.lock().await.get().await.unwrap();
+        add_gold_player().bind(&client, &(gold_amount as i32), &player_id).await.unwrap();
+
+        return Ok(());        
+    }
+
     async fn set_chara_xp_lvl(&mut self, charaid: String, lvl: u32, xp: u32) -> Result<(), ()> {
         let client = self.pool.get().await.unwrap(); //.lock().await.get().await.unwrap();
         update_chara_lvl_xp().bind(&client, &(lvl as i16), &(xp as i32), &charaid).await.unwrap();

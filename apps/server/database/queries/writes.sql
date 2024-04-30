@@ -16,3 +16,8 @@ values (:lvl, :archetypeid, :attack, :defense, :speed, :hp);
 UPDATE character
 set lvl = :lvl, experience = :xp
 where id = :charaid;
+
+--! add_gold_player 
+UPDATE player
+set gold = gold + :delta_gold
+where id = :player_id;

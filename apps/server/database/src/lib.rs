@@ -21,6 +21,17 @@ pub enum AccessorWrapper {
 }
 
 impl AccessorWrapper {
+    pub async fn add_gold_player(&mut self, player_id: &str, gold_amount: u32) -> Result<(), ()> {
+        match self {
+            AccessorWrapper::Live(live) => {
+                live.add_gold_player(player_id, gold_amount).await
+            },
+            AccessorWrapper::Mock(mock) => {
+                mock.add_gold_player(player_id, gold_amount).await
+            }
+        }
+    }
+
     pub async fn set_chara_xp_lvl(&mut self, charaid: String, lvl: u32, xp: u32) -> Result<(), ()> {
         match self {
             AccessorWrapper::Live(live) => {
@@ -31,7 +42,6 @@ impl AccessorWrapper {
             }
         }
     }
-
 
     pub async fn get_player_team_charas(
         &mut self,

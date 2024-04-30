@@ -100,6 +100,7 @@ impl FightService for MyFightService {
                                             payload: Some(Payload::EndFight(EndFight {
                                                 is_player_victory: player_won,
                                                 experience: 8,
+                                                gold: 0
                                             })),
                                         }))
                                         .await
@@ -266,6 +267,7 @@ impl FightService for MyFightService {
                                 payload: Some(Payload::EndFight(EndFight {
                                     is_player_victory: player_won,
                                     experience: xp_gained,
+                                    gold: 0
                                 })),
                             }))
                             .await
@@ -311,6 +313,10 @@ impl FightService for MyFightService {
                             }
 
                             // update gold on database 
+                            {
+                                let mut db_access = db_accessor.lock().await;
+                                db_access.add_gold_player(&player_id, 10).await.unwrap();
+                            }
 
                             break;
                         }
@@ -351,9 +357,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     let mut cfg = Config::new();
-    cfg.user = Some(std::env::var("SUPABASE_DB_USER").unwrap()); //.expect("SUPABASE_DB_USER must be set."));
-    cfg.password = Some(std::env::var("SUPABASE_DB_PASSWORD").unwrap()); //.expect("SUPABASE_DB_PASSWORD must be set."));
-    cfg.host = Some(std::env::var("SUPABASE_DB_HOST").unwrap()); //.expect("SUPABASE_DB_HOST must be set."));
+    cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
+    cfg.password = Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_PASSWORD must be set."));
+    cfg.host = Some(std::env::var("SUPABASE_DB_HOST").expect("SUPABASE_DB_HOST must be set."));
     cfg.port = Some(
         std::env::var("SUPABASE_DB_PORT")
             .expect("SUPABASE_DB_PORT must be set.")
@@ -364,8 +370,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
-    let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
-    //let addr = "[::1]:10000".parse().unwrap();
+    //let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
+    let addr = "[::1]:10000".parse().unwrap();
 
     let db_accessor = DatabaseAccessor {
         pool, //Arc::new(Mutex::new(pool))

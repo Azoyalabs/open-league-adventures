@@ -332,7 +332,7 @@ i32, 1>
         |row| { row.get(0) }, mapper: |it| { it },
     }
 } }}pub mod writes
-{ use futures::{{StreamExt, TryStreamExt}};use futures; use cornucopia_async::GenericClient;#[derive( Debug)] pub struct CreateCharacterParams<T1: cornucopia_async::StringSql,T2: cornucopia_async::StringSql,T3: cornucopia_async::StringSql,> { pub nftaddress: T1,pub playerid: T2,pub archetypeid: T3,}#[derive( Debug)] pub struct CreateArchetypeStatsParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub archetypeid: T1,pub attack: i16,pub defense: i16,pub speed: i16,pub hp: i16,}#[derive( Debug)] pub struct UpdateCharaLvlXpParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub xp: i32,pub charaid: T1,}pub fn create_player() -> CreatePlayerStmt
+{ use futures::{{StreamExt, TryStreamExt}};use futures; use cornucopia_async::GenericClient;#[derive( Debug)] pub struct CreateCharacterParams<T1: cornucopia_async::StringSql,T2: cornucopia_async::StringSql,T3: cornucopia_async::StringSql,> { pub nftaddress: T1,pub playerid: T2,pub archetypeid: T3,}#[derive( Debug)] pub struct CreateArchetypeStatsParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub archetypeid: T1,pub attack: i16,pub defense: i16,pub speed: i16,pub hp: i16,}#[derive( Debug)] pub struct UpdateCharaLvlXpParams<T1: cornucopia_async::StringSql,> { pub lvl: i16,pub xp: i32,pub charaid: T1,}#[derive( Debug)] pub struct AddGoldPlayerParams<T1: cornucopia_async::StringSql,> { pub delta_gold: i32,pub player_id: T1,}pub fn create_player() -> CreatePlayerStmt
 { CreatePlayerStmt(cornucopia_async::private::Stmt::new("insert into Player (id)
 values ($1)")) } pub struct
 CreatePlayerStmt(cornucopia_async::private::Stmt); impl CreatePlayerStmt
@@ -406,4 +406,25 @@ tokio_postgres::Error>> + Send + 'a>>, C> for UpdateCharaLvlXpStmt
     UpdateCharaLvlXpParams<T1,>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
     tokio_postgres::Error>> + Send + 'a>>
     { Box::pin(self.bind(client, &params.lvl,&params.xp,&params.charaid,)) }
+}pub fn add_gold_player() -> AddGoldPlayerStmt
+{ AddGoldPlayerStmt(cornucopia_async::private::Stmt::new("UPDATE player
+set gold = gold + $1
+where id = $2")) } pub struct
+AddGoldPlayerStmt(cornucopia_async::private::Stmt); impl AddGoldPlayerStmt
+{ pub async fn bind<'a, C:
+GenericClient,T1:
+cornucopia_async::StringSql,>(&'a mut self, client: &'a  C,
+delta_gold: &'a i32,player_id: &'a T1,) -> Result<u64, tokio_postgres::Error>
+{
+    let stmt = self.0.prepare(client).await?;
+    client.execute(stmt, &[delta_gold,player_id,]).await
+} }impl <'a, C: GenericClient + Send + Sync, T1: cornucopia_async::StringSql,>
+cornucopia_async::Params<'a, AddGoldPlayerParams<T1,>, std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
+tokio_postgres::Error>> + Send + 'a>>, C> for AddGoldPlayerStmt
+{
+    fn
+    params(&'a mut self, client: &'a  C, params: &'a
+    AddGoldPlayerParams<T1,>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<u64,
+    tokio_postgres::Error>> + Send + 'a>>
+    { Box::pin(self.bind(client, &params.delta_gold,&params.player_id,)) }
 }}}
