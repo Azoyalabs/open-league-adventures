@@ -3,9 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use database::{
-    accessor::DatabaseAccessor, AccessorWrapper,
-};
+use database::{accessor::DatabaseAccessor, AccessorWrapper};
 use deadpool_postgres::{Config, Runtime};
 use dotenv::dotenv;
 use fight_system::FightStatus;
@@ -16,7 +14,10 @@ use postgres::NoTls;
 use rand::{rngs::SmallRng, SeedableRng};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{
+    transport::{Identity, Server, ServerTlsConfig},
+    Request, Response, Status,
+};
 
 use protodefs::pbfight::{
     client_fight_message::ClientMessage,
@@ -100,7 +101,7 @@ impl FightService for MyFightService {
                                             payload: Some(Payload::EndFight(EndFight {
                                                 is_player_victory: player_won,
                                                 experience: 8,
-                                                gold: 0
+                                                gold: 0,
                                             })),
                                         }))
                                         .await
@@ -268,7 +269,7 @@ impl FightService for MyFightService {
                                 payload: Some(Payload::EndFight(EndFight {
                                     is_player_victory: player_won,
                                     experience: xp_gained,
-                                    gold: gold_gained
+                                    gold: gold_gained,
                                 })),
                             }))
                             .await
@@ -313,10 +314,13 @@ impl FightService for MyFightService {
                                 }
                             }
 
-                            // update gold on database 
+                            // update gold on database
                             {
                                 let mut db_access = db_accessor.lock().await;
-                                db_access.add_gold_player(&player_id, gold_gained).await.unwrap();
+                                db_access
+                                    .add_gold_player(&player_id, gold_gained)
+                                    .await
+                                    .unwrap();
                             }
 
                             break;
@@ -359,7 +363,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cfg = Config::new();
     cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
-    cfg.password = Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_PASSWORD must be set."));
+    cfg.password =
+        Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_PASSWORD must be set."));
     cfg.host = Some(std::env::var("SUPABASE_DB_HOST").expect("SUPABASE_DB_HOST must be set."));
     cfg.port = Some(
         std::env::var("SUPABASE_DB_PORT")
@@ -372,7 +377,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
     let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
-    //let addr = "[::1]:10000".parse().unwrap();
+                                                 //let addr = "[::1]:10000".parse().unwrap();
 
     let db_accessor = DatabaseAccessor {
         pool, //Arc::new(Mutex::new(pool))
@@ -387,8 +392,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         id_allocator: Arc::new(Mutex::new(0)),
     };
 
+    // set up tls
+    let cert_path =
+        std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
+    let key_path = std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
+    let cert = tokio::fs::read(cert_path).await?;
+    let key = tokio::fs::read(key_path).await?;
+
+    let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
+
     let svc = FightServiceServer::new(fight_service);
     Server::builder()
+        .tls_config(tls)
+        .unwrap()
         .accept_http1(true)
         //.layer(GrpcWebLayer::new())
         //.add_service(svc)

@@ -1,6 +1,8 @@
 #![allow(async_fn_in_trait)]
 #![allow(non_snake_case)]
 
+use std::{rc::Rc, sync::Arc};
+
 use accessor::DatabaseAccessor;
 use game_types::CharacterRaw;
 use mock_accessor::MockDatabaseAccessor;
