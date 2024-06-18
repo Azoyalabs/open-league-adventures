@@ -9,16 +9,38 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Copy } from 'lucide-svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import { DB_CLIENT } from '$lib/client.js';
 
 	export let data;
 
 	let referalCode = '';
 
-	$: console.dir(data.team)
+	$: console.dir(data.team);
 
 	let clicked = false;
 	// TODO: if already referred, we're not showing the referral code input
-	async function submitReferral() {}
+	async function submitReferral() {
+		// Check if the user is not referring himself
+		if (referalCode === data.userID) {
+			return;
+		}
+
+		// Check if referrer actually exists
+		const { data: referrer } = await DB_CLIENT.from('player')
+			.select('id')
+			.eq('id', referalCode)
+			.single();
+
+		if (referrer) {
+			const { data: referral, error } = await DB_CLIENT.from('referral').insert({
+				referrer_id: referalCode,
+				referred_id: data.userID
+			});
+			if (error === null) {
+				data.referral.referrer = referalCode;
+			}
+		}
+	}
 </script>
 
 <div class="absolute z-10 flex items-center space-x-3 right-2 top-2">
@@ -39,7 +61,7 @@
 				<Dialog.Title>Friends</Dialog.Title>
 				<Dialog.Description>Invite your friends, get rewarded</Dialog.Description>
 			</Dialog.Header>
-			<div class="h-[400px] flex flex-col justify-evenly overflow-y-auto rounded-md border p-4">
+			<div class="flex h-[400px] flex-col justify-evenly overflow-y-auto rounded-md border p-4">
 				<div class="grid items-center w-full max-w-sm gap-2">
 					<Label>Your referral code</Label>
 					<div class="flex items-center px-4 py-2 border rounded-sm">
@@ -73,12 +95,7 @@
 							<Label>Referral Code</Label>
 							<Input placeholder="Enter referral code" bind:value={referalCode} />
 							<p class="text-sm text-muted-foreground">Enter a referral code.</p>
-							<Button
-								on:click={() => submitReferral()}
-								variant="secondary"
-							>
-								Submit</Button
-							>
+							<Button on:click={() => submitReferral()} variant="secondary">Submit</Button>
 						</div>
 					{/if}
 				</div>
