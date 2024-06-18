@@ -29,8 +29,23 @@ use protodefs::pbfight::{
 
 use tokio_stream::StreamExt;
 
+enum RunMode {
+    Local,
+    Production,
+}
+
+impl RunMode {
+    pub fn from_str(value: &str) -> Result<Self, &str> {
+        return match value {
+            "Local" | "LOCAL" => Ok(RunMode::Local),
+            "Production" | "PRODUCTION" => Ok(RunMode::Production),
+            _ => Err("Unknown run mode"),
+        };
+    }
+}
+
 pub struct MyFightService {
-    pub db_accessor: Arc<Mutex<AccessorWrapper>>, //Arc<Mutex<Box<dyn DatabaseAccess + Send + 'static>>>,
+    pub db_accessor: Arc<Mutex<AccessorWrapper>>,
     pub channels: Arc<Mutex<HashMap<u32, mpsc::Sender<()>>>>,
     pub id_allocator: Arc<Mutex<u32>>,
 }
@@ -168,7 +183,6 @@ impl FightService for MyFightService {
             let mut lock = self.id_allocator.lock().await;
             let fight_id = *lock;
             *lock += 1;
-            //println!("Allocated fight id: {}", fight_id);
             fight_id
         };
 
@@ -255,9 +269,6 @@ impl FightService for MyFightService {
 
                 // check fight status
                 if !matches!(fight_status, FightStatus::Ongoing) {
-                    // signal that fight has ended
-                    //fight_ongoing = false;
-                    /*let winner = */
                     match fight_status {
                         FightStatus::Ongoing {} => panic!("never"),
                         FightStatus::FightEnded { player_won } => {
@@ -357,10 +368,7 @@ impl FightService for MyFightService {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
-
+fn load_deadpool_config_from_env() -> Config {
     let mut cfg = Config::new();
     cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
     cfg.password =
@@ -374,37 +382,51 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     cfg.dbname = Some(std::env::var("SUPABASE_DB_NAME").expect("SUPABASE_DB_NAME must be set."));
 
-    let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+    return cfg;
+}
 
-    let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
-                                                 //let addr = "[::1]:10000".parse().unwrap();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok();
 
-    let db_accessor = DatabaseAccessor {
-        pool, //Arc::new(Mutex::new(pool))
-    };
+    let run_mode =
+        RunMode::from_str(&std::env::var("RUN_MODE").unwrap_or(String::from("Production")))
+            .unwrap();
 
-    let wrapped = AccessorWrapper::Live(db_accessor);
+    let pool = load_deadpool_config_from_env()
+        .create_pool(Some(Runtime::Tokio1), NoTls)
+        .unwrap();
 
-    //let addr = "[::1]:50051".parse()?;
+    let addr = match run_mode {
+        RunMode::Production => "0.0.0.0:10000",
+        RunMode::Local => "[::1]:10000",
+    }
+    .parse()
+    .unwrap();
+
     let fight_service = MyFightService {
-        db_accessor: Arc::new(Mutex::new(wrapped)),
+        db_accessor: Arc::new(Mutex::new(AccessorWrapper::Live(DatabaseAccessor { pool }))),
         channels: Arc::new(Mutex::new(HashMap::new())),
         id_allocator: Arc::new(Mutex::new(0)),
     };
 
-    // set up tls
-    let cert_path =
-        std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
-    let key_path = std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
-    let cert = tokio::fs::read(cert_path).await?;
-    let key = tokio::fs::read(key_path).await?;
+    let builder = if matches!(run_mode, RunMode::Production) {
+        let cert_path =
+            std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
+        let key_path =
+            std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
+        let cert = tokio::fs::read(cert_path).await?;
+        let key = tokio::fs::read(key_path).await?;
 
-    let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
+        let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
+
+        Server::builder().tls_config(tls).unwrap()
+    } else {
+        Server::builder()
+    };
 
     let svc = FightServiceServer::new(fight_service);
-    Server::builder()
-        .tls_config(tls)
-        .unwrap()
+    builder
         .accept_http1(true)
         //.layer(GrpcWebLayer::new())
         //.add_service(svc)
