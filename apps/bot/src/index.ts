@@ -1,12 +1,12 @@
 import "dotenv/config";
 
-import { Context, NarrowedContext, Telegraf, Markup } from "telegraf";
-import { message } from "telegraf/filters";
-import { Update, Message } from "telegraf/typings/core/types/typegram";
+import { Telegraf, Markup } from "telegraf";
 import { GAME_URL } from "./constants";
 
 import { createClient } from "@supabase/supabase-js";
 import { type Database } from "./types/supabase";
+import { START_REPLY } from "./messages/start";
+import { builder } from "./messages/list";
 
 const supabase = createClient<Database>(
   process.env.PUBLIC_SUPABASE_URL!,
@@ -16,62 +16,51 @@ const supabase = createClient<Database>(
 async function main() {
   const bot = new Telegraf(process.env.TELEGRAM_DEV_HTTP_TOKEN!);
 
-  bot.action("delete", async (ctx) => {
-    ctx.deleteMessage();
-  });
-
   bot.command("start", async (ctx) => {
     const chat = await ctx.telegram.getChat(ctx.chat.id);
     await supabase.from("player").insert({ id: chat.id.toString() });
 
-    return ctx.replyWithMarkdownV2(
-      `🎮 Get Ready For Adventure\\! 🚀
+    // rpc call for creation
 
-💀 Build a team, Fight monsters\\! 💀
-    
-Eternal Quest is inspired by old\\-school turn\\-based JRPGs, now on Telegram\\!`,
-      {
-        ...Markup.inlineKeyboard([
-          Markup.button.url("Start Playing 🕹️", GAME_URL),
-        ]),
-      }
-    );
-  });
-
-  bot.command("hey", async (ctx) => {
-    ctx.sendMessage("Hello friend");
+    return ctx.replyWithMarkdownV2(START_REPLY, {
+      ...Markup.inlineKeyboard([
+        Markup.button.url("Start Playing 🕹️", GAME_URL),
+      ]),
+    });
   });
 
   bot.command("top_players", async (ctx) => {
-    const { data: players, count } = await supabase
+    const { data: players} = await supabase
       .from("playerpower")
-      .select("*", { count: "planned" })
+      .select("*")
       .order("playerpower", { ascending: false })
       .limit(10);
-    console.dir(count);
 
-    return ctx.replyWithMarkdownV2(`\\# Top 10 Players\n
-${players
-  ?.map((p, i) => {
-    return `${i + 1}\\. ${p.playerid} \\- ${p.playerpower} power`;
-  })
-  .join("\n")}`);
+    return ctx.replyWithMarkdownV2(
+      builder(
+        `\\Top 10 Clans`,
+        (players || []).map((p, i) => {
+          return `${i + 1}\\. ${p.playerid} \\- ${p.playerpower} power`;
+        })
+      )
+    );
   });
 
   bot.command("top_clans", async (ctx) => {
-    const { data: clans, count } = await supabase
+    const { data: clans } = await supabase
       .from("clanpowerlevel")
-      .select("*", { count: "planned" })
+      .select("*")
       .order("clanpower", { ascending: false })
       .limit(10);
-    console.dir(count);
 
-    return ctx.replyWithMarkdownV2(`\\# Top 10 Clans\n
-${clans
-  ?.map((c, i) => {
-    return `${i + 1}\\. ${c.clanname} \\- ${c.clanpower} power`;
-  })
-  .join("\n")}`);
+    return ctx.replyWithMarkdownV2(
+      builder(
+        `\\Top 10 Clans`,
+        (clans || []).map((c, i) => {
+          return `${i + 1}\\. ${c.clanname} \\- ${c.clanpower} power`;
+        })
+      )
+    );
   });
 
   console.log("STARTING BOT");
