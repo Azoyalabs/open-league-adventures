@@ -365,7 +365,12 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      initialize_account: {
+        Args: {
+          playerid: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

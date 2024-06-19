@@ -17,10 +17,22 @@ async function main() {
   const bot = new Telegraf(process.env.TELEGRAM_DEV_HTTP_TOKEN!);
 
   bot.command("start", async (ctx) => {
-    const chat = await ctx.telegram.getChat(ctx.chat.id);
-    await supabase.from("player").insert({ id: chat.id.toString() });
+    const playerID = ctx.chat.id;
+    const chat = await ctx.telegram.getChat(playerID);
+    const { data, error } = await supabase
+      .from("player")
+      .insert({ id: playerID.toString() })
+      .select();
 
-    // rpc call for creation
+    if (error === null) {
+      const { data: count } = await supabase.rpc("initialize_account", {
+        playerid: playerID.toString(),
+      });
+
+      console.log(`Created ${count} characters`);
+    } else {
+      console.log(`User already has an account: ${ctx.chat.id}`);
+    }
 
     return ctx.replyWithMarkdownV2(START_REPLY, {
       ...Markup.inlineKeyboard([
@@ -30,7 +42,7 @@ async function main() {
   });
 
   bot.command("top_players", async (ctx) => {
-    const { data: players} = await supabase
+    const { data: players } = await supabase
       .from("playerpower")
       .select("*")
       .order("playerpower", { ascending: false })
