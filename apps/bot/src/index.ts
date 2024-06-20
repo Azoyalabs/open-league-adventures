@@ -41,6 +41,10 @@ async function main() {
     });
   });
 
+  bot.command("create_clan", (ctx) => {
+    return ctx.reply("Unimplemented")
+  });
+
   bot.command("top_players", async (ctx) => {
     const { data: players } = await supabase
       .from("playerpower")
