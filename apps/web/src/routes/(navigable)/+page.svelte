@@ -15,10 +15,8 @@
 
 	let referalCode = '';
 
-	$: console.dir(data.team);
-
 	let clicked = false;
-	// TODO: if already referred, we're not showing the referral code input
+
 	async function submitReferral() {
 		// Check if the user is not referring himself
 		if (referalCode === data.userID) {
