@@ -115,7 +115,7 @@ export type Database = {
           blason: string
           clandescription: string
           clanname: string
-          id: number
+          id?: number
         }
         Update: {
           blason?: string
