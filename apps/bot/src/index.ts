@@ -37,7 +37,7 @@ async function main() {
     {
       command: "/create_clan",
       description:
-        "Create a new clan with the given name if you're not already in one",
+        "Create a new clan with the given name: /create_clan <name>",
     },
   ]);
 
@@ -109,7 +109,6 @@ async function main() {
       bot.on("callback_query", async (cb_ctx) => {
         // @ts-expect-error we actually are expecting data in this case
         const data = cb_ctx.callbackQuery.data as string;
-        console.dir(data);
         if (data === "abort") {
           await cb_ctx.telegram.deleteMessage(
             message.chat.id,
@@ -130,7 +129,7 @@ async function main() {
               .update({ clanid: created.data.id })
               .eq("id", ctx.chat.id);
 
-            cb_ctx.reply(`Clan ${clanName} successfully created`); 
+            cb_ctx.reply(`Clan ${clanName} successfully created`);
           }
         }
       });
