@@ -3,6 +3,7 @@
 	import Feather from '$lib/assets/itemicon_feather.png';
 	import Sword from '$lib/assets/Itemicon_Equipment_Sword.png';
 	import Star from '$lib/assets/Icon_RankIcon_Star01_l.png';
+	import Shield from "$lib/assets/shield.png"
 	import Health from '$lib/assets/Icon_ColorIcon_Life.png';
 
 	export let hero: {
@@ -26,7 +27,7 @@
 	const statToIcon = {
 		health: Health,
 		attack: Sword,
-		defense: Feather,
+		defense: Shield,
 		speed: Feather
 	};
 
