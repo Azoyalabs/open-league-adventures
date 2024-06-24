@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { Canvas } from '@threlte/core';
 	import { T } from '@threlte/core';
-	import { BoxGeometry, MeshStandardMaterial } from 'three';
 	import { injectLookAtPlugin } from '$lib/threlte.utils';
 	import { Button } from '$lib/components/ui/button';
 	import Energy from '$lib/assets/Itemicon_Energy_0_Yellow.png';
 	import CharacterWrapper, { type AllowedModels } from '$lib/assets/Models/CharacterWrapper.svelte';
+	import Ground from './Ground.svelte';
+	import { Environment } from '@threlte/extras';
 
 	injectLookAtPlugin();
 
+	import { Sky } from '@threlte/extras';
+	import { MeshBasicMaterial } from 'three';
 	let cameraPosition: [x: number, y: number, z: number] = [10, 3, 10];
 	let lookTarget = cameraPosition;
 
@@ -24,16 +27,16 @@
 
 <div class="relative h-full border me">
 	<Canvas>
+
 		<T.DirectionalLight position={[0, 10, 10]} intensity={0.6} castShadow />
-		<T.AmbientLight intensity={0.4} />
+		<T.AmbientLight intensity={0.8} />
+		<!-- 
+		<T.Mesh receiveShadow position={[0, -0.5, 0]} rotation.x={-Math.PI / 2}>
+			<T.CircleGeometry args={[6, 40]} />
 
-		<T.Mesh
-			receiveShadow
-			geometry={new BoxGeometry(100, 1, 100)}
-			position={[0, -0.5, 0]}
-			material={new MeshStandardMaterial()}
-		/>
-
+			<T.MeshBasicMaterial />
+		</T.Mesh> -->
+		 <Ground></Ground> 
 		<T.PerspectiveCamera
 			makeDefault
 			position={cameraPosition}
@@ -43,19 +46,9 @@
 		></T.PerspectiveCamera>
 
 		{#each models as model, i}
-		<CharacterWrapper {model} lookAt={lookTarget} position={modelPositions[i]} ID="model-{i}"
-		></CharacterWrapper>
+			<CharacterWrapper {model} lookAt={lookTarget} position={modelPositions[i]} ID="model-{i}"
+			></CharacterWrapper>
 		{/each}
-		<!-- 
-		<CharacterWrapper model="Knight" lookAt={lookTarget} position={[1, 0, -3]} ID="a"
-		></CharacterWrapper>
-		<CharacterWrapper model="Knight" lookAt={lookTarget} position={[-1, 0, 0]} ID="b"
-		></CharacterWrapper>
-		<CharacterWrapper model="Knight" lookAt={lookTarget} position={[1, 0, 3]} ID="c"
-		></CharacterWrapper>
-		<CharacterWrapper model="Knight" lookAt={lookTarget} position={[4, 0, 0]} ID="d"
-		></CharacterWrapper>
-		 -->
 	</Canvas>
 	<div class="absolute z-10 flex flex-col items-center w-full bottom-10">
 		<div class="flex flex-col items-center text-center font-fredoka">

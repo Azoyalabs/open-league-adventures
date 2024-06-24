@@ -21,9 +21,6 @@ Command: npx @threlte/gltf@2.0.3 ./models/Knight.glb --output=./src/lib/assets/M
 
 	const gltf = useGltf(`${models["./Knight-transformed.glb"]}?${id++}`, { useDraco: true });
 
-	//const gltf = useGltf(`${models.knight}?${id++}`, { useDraco: true });
-	import model from "./Knight-transformed.glb?url";
-	//const gltf = useGltf(`${model}?${id++}`, { useDraco: true });
 	export const { actions, mixer } = useGltfAnimations<HERO_ANIMATIONS_TYPE>(gltf, ref);
 
 	const component = forwardEventHandlers();

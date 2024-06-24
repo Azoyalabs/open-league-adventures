@@ -7,13 +7,3 @@ export const models = import.meta.glob("./*.glb", {
   eager: true,
 import: "default",
 }) as Record<MODELS, string>;
-/*
-import KnightModel from "./Knight-transformed.glb?url";
-import MageModel from "./Knight-transformed.glb?url";
-import SkeletonModel from "./Knight-transformed.glb?url";
-
-export const models = {
-  knight: KnightModel,
-  mage: MageModel,
-  skeleton: SkeletonModel,
-}*/

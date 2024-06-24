@@ -13,7 +13,7 @@
 	import { writable } from 'svelte/store';
 	import type { CharacterState } from './combat.types';
 
-	let cameraPosition: [x: number, y: number, z: number] = [14, 3, 14];
+	let cameraPosition: [x: number, y: number, z: number] = [14, 20, 14];
 
 	const POSITIONS = {
 		ALLIED: [
@@ -41,6 +41,7 @@
 	import CSS2DScene from '$lib/components/app/Utils/CSS2DScene.svelte';
 	import CharacterWithHp from '../../Combat/Character/CharacterWithHP.svelte';
 	import { setContext } from 'svelte';
+	import FightScene from './FightScene.svelte';
 
 	teamCharacters.forEach((c, i) => {
 		setContext(`ALLIED_${i}`, {
@@ -61,23 +62,20 @@
 </script>
 
 <CSS2DScene>
-	<T.DirectionalLight position={[0, 10, 10]} intensity={0.4} castShadow />
+	<T.DirectionalLight position={[0, 20, 20]} intensity={0.9} castShadow />
 	<T.AmbientLight intensity={0.6} />
 
-	<T.PerspectiveCamera
-		makeDefault
-		position={cameraPosition}
-		on:create={({ ref }) => {
-			ref.lookAt(0, 1, 0);
-		}}
-	>
+	<T.PerspectiveCamera makeDefault position={cameraPosition}>
 		<OrbitControls enableDamping />
 	</T.PerspectiveCamera>
+	<!-- 
 	<T.Mesh rotation.x={-Math.PI / 2} receiveShadow>
 		<T.CircleGeometry args={[6, 40]} />
 		<T.MeshStandardMaterial color="white" />
 	</T.Mesh>
+ -->
 
+	<FightScene receiveShadow position={[0, -5, -20]}></FightScene>
 	{#each teamCharacters as character, i}
 		{#if character.currentHP > 0}
 			<CharacterWithHp id={`ALLIED_${i}`}></CharacterWithHp>
