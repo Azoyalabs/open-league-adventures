@@ -1,19 +1,20 @@
 <script context="module" lang="ts">
-	export type AllowedModels = 'Knight' | 'Mage' | 'Skeleton' | "Rogue";
+	export type AllowedModels = 'Knight' | 'Mage' | 'Skeleton' | 'Rogue';
 
 	export function classNameToModel(className: string) {
 		switch (className) {
 			case 'Warrior':
+			case 'Knight':
 				return Knight;
 			case 'Black Mage':
-				return Mage;
+			case 'Mage':
 			case 'White Mage':
 				return Mage;
 			case 'Ranger':
 				return Rogue;
 
 			default:
-				return Knight;
+				return Skeleton;
 		}
 	}
 </script>
@@ -24,7 +25,7 @@
 	import Mage, { type ActionName } from './Mage/Mage.svelte';
 	import Skeleton from './Skeleton/Skeleton_Minion.svelte';
 	import Knight from './Knight.svelte';
-	import Rogue from "./Rogue/Rogue.svelte";
+	import Rogue from './Rogue/Rogue.svelte';
 	import { getContext, onMount } from 'svelte';
 	import type { Message } from '$lib/components/app/Views/Combat/CombatView.svelte';
 	import type { EventBus } from '$lib/components/app/Views/Combat/EventBus';

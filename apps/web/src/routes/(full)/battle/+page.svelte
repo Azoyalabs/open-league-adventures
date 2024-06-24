@@ -28,6 +28,8 @@
 				return 'Mage';
 			case 'Warrior':
 				return 'Knight';
+			case 'Ranger':
+				return 'Ranger';
 
 			default:
 				return 'Skeleton';

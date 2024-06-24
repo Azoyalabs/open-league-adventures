@@ -68,12 +68,6 @@
 	<T.PerspectiveCamera makeDefault position={cameraPosition}>
 		<OrbitControls enableDamping />
 	</T.PerspectiveCamera>
-	<!-- 
-	<T.Mesh rotation.x={-Math.PI / 2} receiveShadow>
-		<T.CircleGeometry args={[6, 40]} />
-		<T.MeshStandardMaterial color="white" />
-	</T.Mesh>
- -->
 
 	<FightScene receiveShadow position={[0, -5, -20]}></FightScene>
 	{#each teamCharacters as character, i}
