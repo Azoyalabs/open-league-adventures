@@ -15,7 +15,10 @@ const supabase = createClient<Database>(
 );
 
 async function main() {
-  const bot = new Telegraf(process.env.TELEGRAM_DEV_HTTP_TOKEN!);
+
+  const isDev = process.argv.includes("--dev");
+  console.log(`Starting in ${isDev ? 'development' : 'production'} mode`)
+  const bot = new Telegraf(isDev ? process.env.TELEGRAM_DEV_HTTP_TOKEN! : process.env.TELEGRAM_HTTP_TOKEN!);
 
   bot.telegram.setMyCommands([
     {
