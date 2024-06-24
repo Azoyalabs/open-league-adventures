@@ -10,6 +10,9 @@
 		description: '10k Coin + 2k Gems'
 	};
 
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+
 	export let data;
 </script>
 
@@ -26,10 +29,36 @@
 			{@const section = category.section}
 			{@const items = category.items}
 
-			<ShopSection sectionType={ShopSectionType.Basic} header={section.title}>
+			<ShopSection
+				sectionType={ShopSectionType.Basic}
+				header={section.title}
+				description={section.description}
+			>
 				<div class="grid grid-cols-2 grid-rows-1 gap-3 md:gap-6">
 					{#each items as item}
-						<ShopCard content={item}></ShopCard>
+						<Dialog.Root>
+							<Dialog.Trigger>
+								<ShopCard content={item}></ShopCard>
+							</Dialog.Trigger>
+
+							<Dialog.Content>
+								<Dialog.Header>
+									<Dialog.Title>Purchase {item.title}</Dialog.Title>
+									<Dialog.Description>
+										<div class="flex flex-col items-center py-4 space-y-3">
+											<img src={item.image} class="aspect-square w-1/4 max-w-[120px]" />
+
+											<div>
+												Get {item.description} and grow stronger!
+											</div>
+										</div>
+									</Dialog.Description>
+									<Dialog.Footer>
+										<Button type="submit">{item.price} TON</Button>
+									</Dialog.Footer>
+								</Dialog.Header>
+							</Dialog.Content>
+						</Dialog.Root>
 					{/each}
 				</div>
 			</ShopSection>

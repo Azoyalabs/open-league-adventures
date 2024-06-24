@@ -57,13 +57,12 @@ const hash = TonWeb.utils.bytesToBase64(await bocCell.hash());
 	const currentEnergy = 100;
 	const maxEnergy = 100;
 
-	const coinBalance = 1000;
 </script>
 
 <div class="mx-auto max-w-[422px] border-x">
 	<BaseLayout>
 		<svelte:fragment slot="header">
-			<Header powerLevel={data.playerPower} {currentEnergy} {maxEnergy} {coinBalance} />
+			<Header powerLevel={data.playerPower} {currentEnergy} {maxEnergy} coinBalance={data.gold} />
 		</svelte:fragment>
 
 		<slot />

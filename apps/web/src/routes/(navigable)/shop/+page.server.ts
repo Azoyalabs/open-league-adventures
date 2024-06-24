@@ -2,7 +2,24 @@ import type { PageServerLoad } from './$types';
 
 export const load = (async () => {
 	// TODO: fetch store offers
-	const shopOffers = [];
+	const shopOffers = [
+		{
+			section: {
+				title: "Daily Gift",
+				color: "Blue",
+				description: "Thank you for playing our game!"
+			},
+			items: [
+				{
+					title: 'Chest of Gold',
+					price: 0,
+					image: '/IconGroup_ShopIcon_Chest.png',
+					description: '100 Gold',
+					id: 'store-offer-id'
+				}
+			]
+		}
+	];
 	/*
 	const shopOffers = [
 		{

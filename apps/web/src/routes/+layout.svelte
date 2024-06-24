@@ -17,7 +17,7 @@
 			const { mainButton, viewport, initData, closingBehavior } = init();
 			closingBehavior.enableConfirmation();
 			viewport.expand();
-			console.dir(initData);
+			// console.dir(initData);
 		} catch (e) {
 			console.error(e);
 		}
@@ -29,13 +29,6 @@
 			},
 			true
 		);
-
-		/*
-		if (dev) {
-			// import eruda from 'eruda';
-			const eruda = await import('eruda');
-			eruda.default.init();
-		}*/
 
 		tonConnectUI = new TonConnectUI({
 			manifestUrl: `${$page.url.origin}/tonconnect-manifest.json`,
@@ -52,17 +45,9 @@
 		});
 
 		isTelegram = true;
-		if ('Telegram' in window) {
-			console.log('telegram');
-			///window.Telegram.WebApp.enableClosingConfirmation();
+		if ('Telegram' in window && 'WebApp' in window.Telegram) {
+			window.Telegram.WebApp.enableClosingConfirmation();
 		}
-
-		/*
-		//const response = await tonConnectUI.sendTransaction()
-		const bocCell = TonWeb.boc.Cell.oneFromBoc(TonWeb.utils.base64ToBytes(response.boc));
-        
-const hash = TonWeb.utils.bytesToBase64(await bocCell.hash());
-*/
 	});
 
 	// TODO: implement elsewhere

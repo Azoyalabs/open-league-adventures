@@ -18,7 +18,7 @@
 			alt={content.title}
 			class="w-full p-4 border rounded bg-secondary aspect-square"
 		/>
-		<div>{content.description}</div>
+		<div class="text-sm">{content.description}</div>
 	</div>
 	<Separator></Separator>
 	<div class="flex items-center justify-center">
