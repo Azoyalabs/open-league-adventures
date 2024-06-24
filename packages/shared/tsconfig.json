@@ -26,5 +26,7 @@
       "node"
     ]
   },
-  "include": ["src"]
+  "files": ["./scripts/gen_icon_types.ts"],
+  "include": ["src"],
+  "exclude": ["./scripts/*"]
 }

@@ -11,13 +11,11 @@
 
 	let isTelegram = false;
 
-	let account: Account | null = null;
 	onMount(async () => {
 		try {
 			const { mainButton, viewport, initData, closingBehavior } = init();
 			closingBehavior.enableConfirmation();
 			viewport.expand();
-			// console.dir(initData);
 		} catch (e) {
 			console.error(e);
 		}

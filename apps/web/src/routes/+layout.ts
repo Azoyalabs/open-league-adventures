@@ -3,12 +3,11 @@ import type { LayoutLoad } from './$types';
 import { init } from '@tma.js/sdk';
 export const ssr = false;
 
-export const load = (async ({ url }) => {
-	let userID = "";
+export const load = (async () => {
+	let userID = '';
 	try {
 		const { initData } = init();
-		console.dir(initData);
-		userID = initData!.user!.id;
+		userID = initData!.user!.id.toString();
 	} catch (error) {
 		console.log('Error getting user ID');
 	}

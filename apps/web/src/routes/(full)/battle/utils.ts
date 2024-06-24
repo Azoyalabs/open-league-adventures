@@ -3,7 +3,6 @@ import type { StartFight, FightAction } from 'protos';
 
 export function payloadToInitialState(startFight: StartFight): BattleState {
 	const { enemyCharacters, fightId, playerCharacters } = startFight;
-	console.dir(playerCharacters);
 	const enemies = enemyCharacters.map((c) => {
 		return {
 			attack: c.attack,
@@ -45,12 +44,13 @@ export function payloadMessageTo(fightAction: FightAction): BattleAction {
 			to: isPlayer ? 'Enemy' : 'Player',
 			unitId: 0
 		},
-		// we're only handling damage for now
 		result: {
 			damage: 0,
 			unitDies: false
 		}
 	};
+
+	// TODO: we're only handling damage for now
 	switch (actionResult.actionResultPayload.oneofKind) {
 		case 'actionResultDamage':
 			{
@@ -61,7 +61,6 @@ export function payloadMessageTo(fightAction: FightAction): BattleAction {
 			}
 			break;
 
-		//return `${isPlayer ? 'Player' : 'Enemy'} ${unitId} takes ${value} damage. ${unitDies ? 'Unit dies' : ''}`;
 		default:
 			throw `Unimplemented action ${actionResult.actionResultPayload.oneofKind}`;
 	}
