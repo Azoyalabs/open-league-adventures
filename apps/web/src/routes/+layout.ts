@@ -4,8 +4,7 @@ import { init } from '@tma.js/sdk';
 export const ssr = false;
 
 export const load = (async ({ url }) => {
-	let userID = '';
-
+	let userID = "";
 	try {
 		const { initData } = init();
 		console.dir(initData);
