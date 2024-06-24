@@ -229,6 +229,10 @@ export interface EndFight {
      * @generated from protobuf field: uint32 experience = 2;
      */
     experience: number;
+    /**
+     * @generated from protobuf field: uint32 gold = 3;
+     */
+    gold: number;
 }
 /**
  * @generated from protobuf message fight.RawCharacterData

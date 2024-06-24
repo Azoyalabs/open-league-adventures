@@ -244,6 +244,10 @@ export interface EndFight {
      * @generated from protobuf field: uint32 experience = 2;
      */
     experience: number;
+    /**
+     * @generated from protobuf field: uint32 gold = 3;
+     */
+    gold: number;
 }
 /**
  * @generated from protobuf message fight.RawCharacterData
@@ -1024,13 +1028,15 @@ class EndFight$Type extends MessageType<EndFight> {
     constructor() {
         super("fight.EndFight", [
             { no: 1, name: "is_player_victory", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
-            { no: 2, name: "experience", kind: "scalar", T: 13 /*ScalarType.UINT32*/ }
+            { no: 2, name: "experience", kind: "scalar", T: 13 /*ScalarType.UINT32*/ },
+            { no: 3, name: "gold", kind: "scalar", T: 13 /*ScalarType.UINT32*/ }
         ]);
     }
     create(value?: PartialMessage<EndFight>): EndFight {
         const message = globalThis.Object.create((this.messagePrototype!));
         message.isPlayerVictory = false;
         message.experience = 0;
+        message.gold = 0;
         if (value !== undefined)
             reflectionMergePartial<EndFight>(this, message, value);
         return message;
@@ -1045,6 +1051,9 @@ class EndFight$Type extends MessageType<EndFight> {
                     break;
                 case /* uint32 experience */ 2:
                     message.experience = reader.uint32();
+                    break;
+                case /* uint32 gold */ 3:
+                    message.gold = reader.uint32();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -1064,6 +1073,9 @@ class EndFight$Type extends MessageType<EndFight> {
         /* uint32 experience = 2; */
         if (message.experience !== 0)
             writer.tag(2, WireType.Varint).uint32(message.experience);
+        /* uint32 gold = 3; */
+        if (message.gold !== 0)
+            writer.tag(3, WireType.Varint).uint32(message.gold);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
