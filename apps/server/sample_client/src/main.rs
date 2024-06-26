@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use protodefs::pbfight::{
-    fight_service_client::FightServiceClient,
-    server_fight_message::Payload, RequestFightNextTickMessage, RequestStartFight,
+    fight_service_client::FightServiceClient, start_fight_response::Payload, NextTickRequest, StartFightRequest
 };
 use tokio::sync::mpsc;
 use tonic::Request;
@@ -48,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             tokio::time::sleep(Duration::from_secs(1)).await;
             client
-                .request_fight_next_tick(Request::new(RequestFightNextTickMessage {
+                .next_tick(Request::new(NextTickRequest {
                     fight_id: fight_id.unwrap(),
                 }))
                 .await
@@ -62,8 +61,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
 
         let response = client
-            .request_fight_start(Request::new(RequestStartFight {
-                player_id: "BigFrogInc".into(),
+            .start_fight(Request::new(StartFightRequest {
+                player_id: "Bogdanoff".into(),
             }))
             .await
             .unwrap();

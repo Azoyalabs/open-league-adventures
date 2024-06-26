@@ -9,8 +9,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_build::configure()
     .build_server(true)
     .compile(
-        &["protos/fight.proto"],
-        &["protos/"],//"protos/fight"],
+        &["../proto/fight/v1/fight.proto"],
+        &["../proto/"],//"protos/fight"],
     )?;
     
     Ok(())

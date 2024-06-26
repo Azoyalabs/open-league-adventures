@@ -5,7 +5,7 @@ pub mod adventures {
 */
 
 pub mod pbfight {
-    tonic::include_proto!("fight");
+    tonic::include_proto!("fight.v1");
 }
 
 

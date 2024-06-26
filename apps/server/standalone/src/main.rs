@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use database::{accessor::DatabaseAccessor, AccessorWrapper};
+use database::{accessor::DatabaseAccessor, live_db_wrapper::LiveDbWrapper, trait_def::{DatabaseAccess, DbWrapper}, AccessorWrapper};
 use deadpool_postgres::{Config, Runtime};
 use dotenv::dotenv;
 use fight_system::FightStatus;
@@ -20,159 +20,26 @@ use tonic::{
 };
 
 use protodefs::pbfight::{
-    client_fight_message::ClientMessage,
     fight_service_server::{FightService, FightServiceServer},
-    server_fight_message::Payload,
-    ClientFightMessage, EndFight, RawCharacterData, RequestFightNextTickMessage, RequestStartFight,
-    ResponseFightNextTick, ServerFightMessage, StartFight,
+    start_fight_response::Payload,
+    EndFight, NextTickRequest, NextTickResponse, RawCharacterData, StartFight, StartFightRequest,
+    StartFightResponse,
 };
 
-use tokio_stream::StreamExt;
-
-enum RunMode {
-    Local,
-    Production,
-}
-
-impl RunMode {
-    pub fn from_str(value: &str) -> Result<Self, &str> {
-        return match value {
-            "Local" | "LOCAL" => Ok(RunMode::Local),
-            "Production" | "PRODUCTION" => Ok(RunMode::Production),
-            _ => Err("Unknown run mode"),
-        };
-    }
-}
-
 pub struct MyFightService {
-    pub db_accessor: Arc<Mutex<AccessorWrapper>>,
+    pub db_accessor: Arc<Mutex<Box<dyn DbWrapper + Send>>>, //Arc<Mutex<Box<dyn DatabaseAccess + Send + 'static>>>,
     pub channels: Arc<Mutex<HashMap<u32, mpsc::Sender<()>>>>,
     pub id_allocator: Arc<Mutex<u32>>,
 }
 
 #[tonic::async_trait]
 impl FightService for MyFightService {
-    type FightStream = ReceiverStream<Result<ServerFightMessage, Status>>;
-    type RequestFightStartStream = ReceiverStream<Result<ServerFightMessage, Status>>;
+    type StartFightStream = ReceiverStream<Result<StartFightResponse, Status>>;
 
-    async fn fight(
+    async fn start_fight(
         &self,
-        request: Request<tonic::Streaming<ClientFightMessage>>,
-    ) -> Result<Response<Self::FightStream>, Status> {
-        let mut client_stream = request.into_inner();
-
-        let (tx, rx) = mpsc::channel(4);
-
-        let db_accessor = { self.db_accessor.clone() };
-
-        tokio::spawn(async move {
-            let mut rng = SmallRng::from_entropy();
-            let mut fight_ongoing = true;
-
-            let mut player_charas_ok: Vec<Character> = vec![];
-
-            let mut enemy_chars: Vec<Character> = vec![Character {
-                max_hp: 6,
-                current_hp: 6,
-                attack: 6,
-                defense: 6,
-                speed: 6,
-            }];
-            let mut player_speed_acc = vec![0; player_charas_ok.len()];
-            let mut enemy_speed_acc = vec![0; enemy_chars.len()];
-
-            while let Some(msg) = client_stream.next().await {
-                if let Ok(client_msg) = msg {
-                    match client_msg.client_message.unwrap() {
-                        ClientMessage::RequestNextTick(_) => {
-                            if !fight_ongoing {
-                                continue;
-                            }
-
-                            let (tick_data, fight_status) = fight_system::tick(
-                                &mut player_charas_ok,
-                                &mut enemy_chars,
-                                &mut player_speed_acc,
-                                &mut enemy_speed_acc,
-                                &mut rng,
-                            );
-
-                            // process next tick of the game
-                            tx.send(Ok(ServerFightMessage {
-                                payload: Some(Payload::FightAction(tick_data.to_protobuf())),
-                            }))
-                            .await
-                            .unwrap();
-
-                            // check fight status
-                            if !matches!(fight_status, FightStatus::Ongoing) {
-                                // signal that fight has ended
-                                fight_ongoing = false;
-                                /*let winner = */
-                                match fight_status {
-                                    FightStatus::Ongoing {} => panic!("never"),
-                                    FightStatus::FightEnded { player_won } => {
-                                        tx.send(Ok(ServerFightMessage {
-                                            payload: Some(Payload::EndFight(EndFight {
-                                                is_player_victory: player_won,
-                                                experience: 8,
-                                                gold: 0,
-                                            })),
-                                        }))
-                                        .await
-                                        .unwrap();
-                                    }
-                                };
-                            }
-                        }
-                        ClientMessage::RequestStartFight(rq) => {
-                            let player_charas_from_server = {
-                                let mut acc = db_accessor.lock().await; //.unwrap();
-                                acc.get_player_team_charas(&rq.player_id).await.unwrap()
-                            };
-
-                            player_charas_ok = player_charas_from_server
-                                .iter()
-                                .map(|chara| chara.to_character())
-                                .collect();
-
-                            player_speed_acc = vec![0; player_charas_ok.len()];
-
-                            let player_charas: Vec<RawCharacterData> = player_charas_from_server
-                                .iter()
-                                .map(|chara| RawCharacterData {
-                                    max_hp: chara.max_hp,
-                                    attack: chara.attack,
-                                    defense: 0,
-                                    speed: chara.speed,
-                                })
-                                .collect();
-                            tx.send(Ok(ServerFightMessage {
-                                payload: Some(Payload::StartFight(StartFight {
-                                    fight_id: 0,
-                                    player_characters: player_charas.clone(),
-                                    enemy_characters: vec![],
-                                })),
-                            }))
-                            .await
-                            .unwrap();
-                        }
-                    }
-                } else {
-                    // stream closed, break out
-                    println!("Client has dropped, closing stream");
-                    break;
-                }
-            }
-        });
-
-        Ok(Response::new(ReceiverStream::new(rx)))
-    }
-
-    async fn request_fight_start(
-        &self,
-        request: Request<RequestStartFight>,
-    ) -> Result<Response<Self::RequestFightStartStream>, Status> {
+        request: Request<StartFightRequest>,
+    ) -> Result<Response<Self::StartFightStream>, Status> {
         println!("Received request to start new fight");
         let (tx, rx) = mpsc::channel(4);
 
@@ -183,6 +50,7 @@ impl FightService for MyFightService {
             let mut lock = self.id_allocator.lock().await;
             let fight_id = *lock;
             *lock += 1;
+            //println!("Allocated fight id: {}", fight_id);
             fight_id
         };
 
@@ -206,9 +74,10 @@ impl FightService for MyFightService {
                 speed: 6,
             }];
 
-            let player_charas_from_server = {
-                let mut acc = db_accessor.lock().await; //.unwrap();
+            let player_charas_from_server: Vec<game_types::CharacterRaw> = {
+                let acc = db_accessor.lock().await; //.unwrap();
                 acc.get_player_team_charas(&player_id).await.unwrap()
+                //vec![]
             };
 
             let mut player_charas_ok: Vec<Character> = player_charas_from_server
@@ -240,7 +109,7 @@ impl FightService for MyFightService {
                 .collect();
 
             // send to player that fight is ready to proceed
-            tx.send(Ok(ServerFightMessage {
+            tx.send(Ok(StartFightResponse {
                 payload: Some(Payload::StartFight(StartFight {
                     fight_id,
                     player_characters: player_charas.clone(),
@@ -261,7 +130,7 @@ impl FightService for MyFightService {
                 );
 
                 // process next tick of the game
-                tx.send(Ok(ServerFightMessage {
+                tx.send(Ok(StartFightResponse {
                     payload: Some(Payload::FightAction(tick_data.to_protobuf())),
                 }))
                 .await
@@ -269,6 +138,9 @@ impl FightService for MyFightService {
 
                 // check fight status
                 if !matches!(fight_status, FightStatus::Ongoing) {
+                    // signal that fight has ended
+                    //fight_ongoing = false;
+                    /*let winner = */
                     match fight_status {
                         FightStatus::Ongoing {} => panic!("never"),
                         FightStatus::FightEnded { player_won } => {
@@ -276,7 +148,7 @@ impl FightService for MyFightService {
                             let gold_gained = 10;
 
                             println!("Fight has ended, notifying player");
-                            tx.send(Ok(ServerFightMessage {
+                            tx.send(Ok(StartFightResponse {
                                 payload: Some(Payload::EndFight(EndFight {
                                     is_player_victory: player_won,
                                     experience: xp_gained,
@@ -301,6 +173,7 @@ impl FightService for MyFightService {
                                             lvl,
                                             db_access.get_xp_required(lvl).await.unwrap(),
                                         );
+                                        
                                     }
                                 }
                             }
@@ -317,21 +190,25 @@ impl FightService for MyFightService {
 
                                 // call to db
                                 {
+                                    
                                     let mut db_access = db_accessor.lock().await;
                                     db_access
                                         .set_chara_xp_lvl(c.character_id.clone(), new_lvl, new_xp)
                                         .await
                                         .unwrap();
+                                    
                                 }
                             }
 
                             // update gold on database
                             {
+                                
                                 let mut db_access = db_accessor.lock().await;
                                 db_access
                                     .add_gold_player(&player_id, gold_gained)
                                     .await
                                     .unwrap();
+                                
                             }
 
                             break;
@@ -344,10 +221,10 @@ impl FightService for MyFightService {
         return Ok(Response::new(ReceiverStream::new(rx)));
     }
 
-    async fn request_fight_next_tick(
+    async fn next_tick(
         &self,
-        request: Request<RequestFightNextTickMessage>,
-    ) -> Result<Response<ResponseFightNextTick>, Status> {
+        request: Request<NextTickRequest>,
+    ) -> Result<Response<NextTickResponse>, Status> {
         let tx = {
             self.channels
                 .lock()
@@ -364,11 +241,14 @@ impl FightService for MyFightService {
 
         tx.send(()).await.unwrap();
 
-        return Ok(Response::new(ResponseFightNextTick {}));
+        return Ok(Response::new(NextTickResponse {}));
     }
 }
 
-fn load_deadpool_config_from_env() -> Config {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok();
+
     let mut cfg = Config::new();
     cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
     cfg.password =
@@ -382,51 +262,40 @@ fn load_deadpool_config_from_env() -> Config {
     );
     cfg.dbname = Some(std::env::var("SUPABASE_DB_NAME").expect("SUPABASE_DB_NAME must be set."));
 
-    return cfg;
-}
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
+    let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
+    //let addr = "[::1]:10000".parse().unwrap();
 
-    let run_mode =
-        RunMode::from_str(&std::env::var("RUN_MODE").unwrap_or(String::from("Production")))
-            .unwrap();
 
-    let pool = load_deadpool_config_from_env()
-        .create_pool(Some(Runtime::Tokio1), NoTls)
-        .unwrap();
+    //let wrapped = AccessorWrapper::Live(db_accessor);
+    let wrapped = LiveDbWrapper {
+        pool: cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap()
+    };
 
-    let addr = match run_mode {
-        RunMode::Production => "0.0.0.0:10000",
-        RunMode::Local => "[::1]:10000",
-    }
-    .parse()
-    .unwrap();
-
+    //let addr = "[::1]:50051".parse()?;
     let fight_service = MyFightService {
-        db_accessor: Arc::new(Mutex::new(AccessorWrapper::Live(DatabaseAccessor { pool }))),
+        db_accessor: Arc::new(Mutex::new(Box::new(wrapped))),
         channels: Arc::new(Mutex::new(HashMap::new())),
         id_allocator: Arc::new(Mutex::new(0)),
     };
 
-    let builder = if matches!(run_mode, RunMode::Production) {
-        let cert_path =
-            std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
-        let key_path =
-            std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
-        let cert = tokio::fs::read(cert_path).await?;
-        let key = tokio::fs::read(key_path).await?;
+    // set up tls
+    /*
+    let cert_path =
+        std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
+    let key_path = std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
+    let cert = tokio::fs::read(cert_path).await?;
+    let key = tokio::fs::read(key_path).await?;
 
-        let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
-
-        Server::builder().tls_config(tls).unwrap()
-    } else {
-        Server::builder()
-    };
+    let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
+    */
 
     let svc = FightServiceServer::new(fight_service);
-    builder
+    Server::builder()
+        /*
+        .tls_config(tls)
+        .unwrap()
+        */
         .accept_http1(true)
         //.layer(GrpcWebLayer::new())
         //.add_service(svc)

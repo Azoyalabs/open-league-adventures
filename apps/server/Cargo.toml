@@ -6,4 +6,4 @@ members = [
     "standalone", 
     "sample_client", 
     "protodefs"
-    ]
+, "eternal_quest_sdk"]

@@ -1,60 +1,48 @@
 syntax = "proto3";
-package fight;
+package fight.v2;
 
 
 // ---------- SERVICES ----------  
 
 service FightService {
-    rpc Fight(stream ClientFightMessage) returns (stream ServerFightMessage);
-
-    rpc RequestFightStart(RequestStartFight) returns (stream ServerFightMessage);
-    rpc RequestFightNextTick(RequestFightNextTickMessage) returns (ResponseFightNextTick);
+    rpc StartFight(StartFightRequest) returns (stream StartFightResponse);
+    rpc NextTick(NextTickRequest) returns (NextTickResponse);
 }
 
-
-// ---------- FIGHT MESSAGES ----------  
-/**
-Messages sent by the server to the client during a fight to signify events in the fight.
-Should include: 
-- Unit actions (attack, spells, skills...) and their result (success, miss, target)
-- End of fight  
-
-*/
-
-
-message RequestFightNextTickMessage {
+// ---------- NextTick Service Messages  ---------- 
+message NextTickRequest {
     uint32 fight_id = 1;
 }
 
 
-/*
-enum ResponseFightNextTickErrors {
-    None,
-}
-*/
-
-
-message ResponseFightNextTick {
+message NextTickResponse {
     
 }
 
-
-message ClientFightMessage {
-    oneof client_message {
-        RequestStartFight request_start_fight = 1;
-        RequestNextTick request_next_tick = 2;
+// ---------- StartFight Service Messages  ---------- 
+message StartFightRequest {
+    string player_id = 1;
+    oneof fight_type {
+        PveFightRequest pve_fight_request = 2;
+        PvpFightRequest pvp_fight_request = 3;
+        RaidFightRequest raid_fight_request = 4;
     }
 }
 
+message PveFightRequest {
+    string fight_id = 1;   
+}
 
-message RequestStartFight {
+message PvpFightRequest {
     string player_id = 1;
 }
 
-message RequestNextTick {}
+message RaidFightRequest {
+    string raid_id = 1;
+}
 
 
-message ServerFightMessage {
+message StartFightResponse {
     oneof payload {
         StartFight start_fight = 1;
         FightAction fight_action = 2;
@@ -108,11 +96,6 @@ message FightAction {
     repeated ActionResult action_result = 5;
 }
 
-/*
-message FightReward {
-    uint32 experience = 0;
-}
-*/
 
 message EndFight {
     bool is_player_victory = 1;

@@ -2,6 +2,7 @@ use game_types::Character;
 use rand::prelude::*;
 
 pub mod actions;
+pub mod fight_v2;
 
 use actions::{ActionResult, ActionType, TickData, UnitReference};
 

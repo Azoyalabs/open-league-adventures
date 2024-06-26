@@ -20,8 +20,8 @@ WHERE PlayerTeam.playerId = :playerid;
 --! get_team_user_characters_with_stats
 SELECT Character.id AS character_id, Character.experience, ArchetypeStats.*
 FROM PlayerTeam
-INNER JOIN Character ON PlayerTeam.playerId = Character.playerID
-INNER JOIN ArchetypeStats ON Character.archetypeID = ArchetypeStats.archetypeID AND character.lvl = archetypestats.lvl
+INNER JOIN Character ON PlayerTeam.characterIDs @> ARRAY[Character.id] AND PlayerTeam.playerId = Character.playerID
+INNER JOIN ArchetypeStats ON Character.archetypeID = ArchetypeStats.archetypeID AND Character.lvl = ArchetypeStats.lvl
 WHERE PlayerTeam.playerId = :playerid;
 
 --! get_xp_required 

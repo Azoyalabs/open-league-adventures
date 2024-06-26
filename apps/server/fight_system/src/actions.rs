@@ -95,8 +95,6 @@ pub struct TickData {
 
 impl TickData {
     pub fn to_protobuf(self) -> FightAction {
-        
-
         FightAction {
             unit_id: Some(self.unit_acting.to_protobuf()),
             action: Some(protodefs::pbfight::fight_action::Action::FightActionAttack(
