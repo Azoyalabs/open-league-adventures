@@ -3,8 +3,11 @@ use std::{
     sync::Arc,
 };
 
-use database::{accessor::DatabaseAccessor, live_db_wrapper::LiveDbWrapper, trait_def::{DatabaseAccess, DbWrapper}, AccessorWrapper};
-use deadpool_postgres::{Config, Runtime};
+use database::{
+    live_db_wrapper::LiveDbWrapper,
+    trait_def::DbWrapper,
+};
+use deadpool_postgres::Runtime;
 use dotenv::dotenv;
 use fight_system::FightStatus;
 use futures_util::lock::Mutex;
@@ -26,11 +29,40 @@ use protodefs::pbfight::{
     StartFightResponse,
 };
 
+mod utils;
+
+enum RunMode {
+    Development,
+    Production,
+}
+
+impl RunMode {
+    pub fn from_str(value: &str) -> Result<Self, &str> {
+        return match value {
+            "Development" | "DEVELOPMENT" => Ok(RunMode::Development),
+            "Production" | "PRODUCTION" => Ok(RunMode::Production),
+            _ => Err("Unknown run mode"),
+        };
+    }
+}
+
 pub struct MyFightService {
     pub db_accessor: Arc<Mutex<Box<dyn DbWrapper + Send>>>, //Arc<Mutex<Box<dyn DatabaseAccess + Send + 'static>>>,
     pub channels: Arc<Mutex<HashMap<u32, mpsc::Sender<()>>>>,
     pub id_allocator: Arc<Mutex<u32>>,
 }
+
+impl MyFightService {
+    async fn fetch_encounter_enemies(&self, zone_id: u32, battle_id: u32) -> Result<(), ()> {
+        {
+            // lock db_accessor and query db 
+            // should get something like vec of chars? 
+        }
+
+        return Ok(());
+    }
+}
+
 
 #[tonic::async_trait]
 impl FightService for MyFightService {
@@ -173,7 +205,6 @@ impl FightService for MyFightService {
                                             lvl,
                                             db_access.get_xp_required(lvl).await.unwrap(),
                                         );
-                                        
                                     }
                                 }
                             }
@@ -190,25 +221,21 @@ impl FightService for MyFightService {
 
                                 // call to db
                                 {
-                                    
                                     let mut db_access = db_accessor.lock().await;
                                     db_access
                                         .set_chara_xp_lvl(c.character_id.clone(), new_lvl, new_xp)
                                         .await
                                         .unwrap();
-                                    
                                 }
                             }
 
                             // update gold on database
                             {
-                                
                                 let mut db_access = db_accessor.lock().await;
                                 db_access
                                     .add_gold_player(&player_id, gold_gained)
                                     .await
                                     .unwrap();
-                                
                             }
 
                             break;
@@ -245,34 +272,36 @@ impl FightService for MyFightService {
     }
 }
 
+
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let mut cfg = Config::new();
-    cfg.user = Some(std::env::var("SUPABASE_DB_USER").expect("SUPABASE_DB_USER must be set."));
-    cfg.password =
-        Some(std::env::var("SUPABASE_DB_PASSWORD").expect("SUPABASE_DB_PASSWORD must be set."));
-    cfg.host = Some(std::env::var("SUPABASE_DB_HOST").expect("SUPABASE_DB_HOST must be set."));
-    cfg.port = Some(
-        std::env::var("SUPABASE_DB_PORT")
-            .expect("SUPABASE_DB_PORT must be set.")
-            .parse()
-            .unwrap(),
-    );
-    cfg.dbname = Some(std::env::var("SUPABASE_DB_NAME").expect("SUPABASE_DB_NAME must be set."));
+    let run_mode =
+        RunMode::from_str(&std::env::var("RUN_MODE").unwrap_or(String::from("Development")))
+            .unwrap();
 
+    let addr = match run_mode {
+        RunMode::Production => {
+            println!("Running in Production mode");
+            "0.0.0.0:10000"
+        }
+        RunMode::Development => {
+            println!("Running in Development mode");
+            "[::1]:10000"
+        }
+    }
+    .parse()
+    .unwrap();
 
-    let addr = "0.0.0.0:10000".parse().unwrap(); //"[::1]:10000".parse().unwrap();
-    //let addr = "[::1]:10000".parse().unwrap();
-
+    let pool = utils::load_deadpool_config_from_env()
+        .create_pool(Some(Runtime::Tokio1), NoTls)
+        .unwrap();
 
     //let wrapped = AccessorWrapper::Live(db_accessor);
-    let wrapped = LiveDbWrapper {
-        pool: cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap()
-    };
+    let wrapped = LiveDbWrapper { pool: pool };
 
-    //let addr = "[::1]:50051".parse()?;
     let fight_service = MyFightService {
         db_accessor: Arc::new(Mutex::new(Box::new(wrapped))),
         channels: Arc::new(Mutex::new(HashMap::new())),
@@ -280,26 +309,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // set up tls
-    /*
-    let cert_path =
-        std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
-    let key_path = std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
-    let cert = tokio::fs::read(cert_path).await?;
-    let key = tokio::fs::read(key_path).await?;
+    let enable_tls = &std::env::var("TLS_STATUS").unwrap_or(String::from("disabled")) == "enabled";
+    let builder = if enable_tls {
+        let cert_path =
+            std::env::var("TLS_CERTIFICATE_PATH").expect("TLS_CERTIFICATE_PATH must be set.");
+        let key_path =
+            std::env::var("TLS_CERTIFICATE_KEY").expect("TLS_CERTIFICATE_KEY must be set.");
+        let cert = tokio::fs::read(cert_path).await?;
+        let key = tokio::fs::read(key_path).await?;
 
-    let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
-    */
+        let tls = ServerTlsConfig::new().identity(Identity::from_pem(cert, key));
 
-    let svc = FightServiceServer::new(fight_service);
-    Server::builder()
-        /*
+        Server::builder()
         .tls_config(tls)
         .unwrap()
-        */
+    } else {
+        Server::builder()        
+    };
+
+    //run server 
+    builder
         .accept_http1(true)
-        //.layer(GrpcWebLayer::new())
-        //.add_service(svc)
-        .add_service(tonic_web::enable(svc))
+        .add_service(tonic_web::enable(FightServiceServer::new(fight_service)))
         .serve(addr)
         .await?;
 

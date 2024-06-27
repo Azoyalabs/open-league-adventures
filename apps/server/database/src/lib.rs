@@ -14,7 +14,6 @@ pub mod mock_accessor;
 pub mod trait_def;
 
 pub mod live_db_wrapper;
-pub mod mock_db_wrapper;
 pub mod sqlx_db_wrapper;
 
 pub mod cornucopia;

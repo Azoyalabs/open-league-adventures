@@ -30,7 +30,9 @@ message StartFightRequest {
 }
 
 message PveFightRequest {
-    string fight_id = 1;   
+    //string fight_id = 1;   
+    uint32 zone_id = 1;
+    uint32 battle_id = 2;
 }
 
 message PvpFightRequest {

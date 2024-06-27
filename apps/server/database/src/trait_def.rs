@@ -41,28 +41,28 @@ pub struct MockDbWrapper {}
 impl DbWrapper for MockDbWrapper {
     fn add_gold_player(
         &mut self,
-        player_id: &str,
-        gold_amount: u32,
+        _player_id: &str,
+        _gold_amount: u32,
     ) -> Pin<Box<dyn Future<Output = Result<(), ()>> + Send>> {
         Box::pin(async move { Ok(()) })
     }
 
     fn get_player_team_charas(
         &self,
-        player_id: &str,
+        _player_id: &str,
     ) -> Pin<Box<dyn Future<Output = Result<Vec<CharacterRaw>, ()>> + Send>> {
         Box::pin(async move { Ok(vec![]) })
     }
 
-    fn get_xp_required(&self, lvl: u32) -> Pin<Box<dyn Future<Output = Result<u32, ()>> + Send>> {
+    fn get_xp_required(&self, _lvl: u32) -> Pin<Box<dyn Future<Output = Result<u32, ()>> + Send>> {
         Box::pin(async move { Ok(100) })
     }
 
     fn set_chara_xp_lvl(
         &mut self,
-        charaid: String,
-        lvl: u32,
-        xp: u32,
+        _charaid: String,
+        _lvl: u32,
+        _xp: u32,
     ) -> Pin<Box<dyn Future<Output = Result<(), ()>> + Send>> {
         Box::pin(async move { Ok(()) })
     }
